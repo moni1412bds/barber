@@ -131,9 +131,7 @@
         button.btn-close-day { background-color: #ef4444; color: white; border: none; cursor: pointer; font-weight: bold; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; width: auto; }
         button.btn-sync { background-color: #0284c7; color: white; border: none; cursor: pointer; font-weight: bold; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; width: auto; }
         
-        /* Botón de actualizar cambiado a color VERDE (#10b981) */
         button.btn-update { background-color: #10b981; color: white; border: none; cursor: pointer; font-weight: bold; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; width: auto; }
-        
         button.btn-config { background-color: #475569; color: white; border: none; cursor: pointer; font-weight: bold; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; width: auto; }
 
         .table-responsive {
@@ -402,7 +400,7 @@
 
 <script>
     // CONFIGURACIÓN DE VERSIÓN V1.0.3
-    var APP_VERSION = "1.0.3";
+    var APP_VERSION = "1.0.4";
     var URL_ACTUALIZACION = "https://raw.githubusercontent.com/moni1412bds/barber/main/index.html";
 
     var BIN_ID = '6aad8afeffd5d160531714d0';
@@ -450,6 +448,7 @@
         });
     }
 
+    // FUNCIÓN DE ACTUALIZACIÓN CON MÓDULO FS (NODE.JS / NW.JS)
     async function buscarActualizacion(manual) {
         if (!manual) manual = false;
         
@@ -471,9 +470,31 @@
             var versionRemota = matchVersion ? matchVersion[1] : null;
 
             if (versionRemota && versionRemota !== APP_VERSION) {
-                if (confirm(`🚀 ¡Hay una nueva versión de la app disponible (v${versionRemota})!\n¿Querés actualizar ahora? TUS DATOS NO SE PERDERÁN.`)) {
-                    guardarLocal();
+                if (confirm(`🚀 ¡Hay una nueva versión disponible (v${versionRemota})!\n¿Querés actualizar el archivo local? TUS DATOS NO SE PERDERÁN.`)) {
                     
+                    guardarLocal();
+
+                    // DETECCIÓN Y USO DEL MÓDULO 'fs' DE NODE.JS (NW.JS)
+                    if (typeof require !== 'undefined') {
+                        try {
+                            const fs = require('fs');
+                            const path = require('path');
+                            
+                            // Obtiene la ruta física exacta del archivo index.html
+                            const rutaIndex = path.join(process.cwd(), 'index.html');
+                            
+                            // Sobrescribe físicamente el archivo en el disco duro
+                            fs.writeFileSync(rutaIndex, htmlNuevo, 'utf8');
+                            
+                            alert("✅ ¡El archivo local index.html fue actualizado con éxito! La app se reiniciará.");
+                            window.location.reload();
+                            return;
+                        } catch (errNode) {
+                            alert("Error al escribir en el disco: " + errNode.message);
+                        }
+                    }
+
+                    // Respaldo en caso de ejecutarse directamente en un navegador común
                     document.open();
                     document.write(htmlNuevo);
                     document.close();
