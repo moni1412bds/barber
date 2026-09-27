@@ -202,7 +202,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 999;
         }
-        /* Contenido del modal con posición relativa para ubicar el botón de cierre */
+        
         .modal-content { 
             position: relative; 
             background: white; 
@@ -212,7 +212,6 @@
             max-width: 480px; 
         }
         
-        /* Botón Cruz (X) Roja de Cierre */
         .btn-modal-close-x {
             position: absolute;
             top: 12px;
@@ -251,7 +250,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.2 (Actualizado)</span></h1>
+        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.2</span></h1>
         <div class="date-badge" id="fechaHoy">--/--/----</div>
     </div>
 
@@ -367,7 +366,6 @@
 <!-- MODAL CONFIGURACIÓN -->
 <div class="modal-bg" id="modalBarberos">
     <div class="modal-content">
-        <!-- BOTÓN CRUZ DE CIERRE AGREGADO -->
         <button class="btn-modal-close-x" onclick="cerrarModalBarberos()" title="Cerrar">✕</button>
 
         <h3 style="margin-top:0;">⚙️ Configurar Barberos</h3>
@@ -474,11 +472,17 @@
                 if (confirm(`🚀 ¡Hay una nueva versión de la app disponible (v${versionRemota})!\n¿Querés actualizar ahora? TUS DATOS NO SE PERDERÁN.`)) {
                     guardarLocal();
                     
-                    document.open();
-                    document.write(htmlNuevo);
-                    document.close();
-                    
-                    window.location.reload();
+                    // Si se está ejecutando desde un archivo local (file://), sobrescribimos el documento sin reload
+                    if (window.location.protocol === 'file:') {
+                        document.open();
+                        document.write(htmlNuevo);
+                        document.close();
+                    } else {
+                        document.open();
+                        document.write(htmlNuevo);
+                        document.close();
+                        window.location.reload();
+                    }
                 }
             } else if (manual) {
                 alert("Ya tenés la última versión instalada (v" + APP_VERSION + ").");
