@@ -216,7 +216,7 @@
 
 <div class="container">
     <div class="header">
-       <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.1 (Actualizado)</span></h1>
+        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.1 (Actualizado)</span></h1>
         <div class="date-badge" id="fechaHoy">--/--/----</div>
     </div>
 
@@ -362,19 +362,19 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN DE VERSIÓN Y SERVIDOR DE ACTUALIZACIONES
-    const APP_VERSION = "1.0.1"; // <-- Cambiá este valor en tu casa cuando hagas mejoras (ej. 1.0.1)
-    const URL_ACTUALIZACION = "https://github.com/moni1412bds/barber/blob/main/index.html"; // <-- Reemplazá por tu URL online
+    // CONFIGURACIÓN DE VERSIÓN Y SERVIDOR (Uso de 'var' para evitar re-declaración)
+    var APP_VERSION = "1.0.1";
+    var URL_ACTUALIZACION = "https://raw.githubusercontent.com/moni1412bds/barber/main/index.html";
 
-    const BIN_ID = '6aad8afeffd5d160531714d0';
-    const MASTER_KEY = '$2a$10$FCxMjtRnqqHPzGwm9sQLP.IwkeMvcgCSPwHRUd3yn4WR8Tc8LUJSa';
+    var BIN_ID = '6aad8afeffd5d160531714d0';
+    var MASTER_KEY = '$2a$10$FCxMjtRnqqHPzGwm9sQLP.IwkeMvcgCSPwHRUd3yn4WR8Tc8LUJSa';
 
-    let listaBarberos = ['riki', 'lucas', 'willy'];
-    let registrosHoy = [];
-    let historialCierres = [];
-    let indiceEditando = -1;
+    var listaBarberos = ['riki', 'lucas', 'willy'];
+    var registrosHoy = [];
+    var historialCierres = [];
+    var indiceEditando = -1;
 
-    const coloresBarberos = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+    var coloresBarberos = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
     document.getElementById('lblVersion').innerText = `v${APP_VERSION}`;
     document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString('es-AR', {
@@ -382,9 +382,9 @@
     });
 
     function cargarLocal() {
-        const localBarberos = localStorage.getItem('barber_lista');
-        const localReg = localStorage.getItem('barber_registrosHoy');
-        const localHist = localStorage.getItem('barber_historialCierres');
+        var localBarberos = localStorage.getItem('barber_lista');
+        var localReg = localStorage.getItem('barber_registrosHoy');
+        var localHist = localStorage.getItem('barber_historialCierres');
         
         if (localBarberos) listaBarberos = JSON.parse(localBarberos);
         if (localReg) registrosHoy = JSON.parse(localReg);
@@ -400,43 +400,47 @@
     }
 
     function actualizarSelectoresBarberos() {
-        const select = document.getElementById('peluquero');
+        var select = document.getElementById('peluquero');
+        if (!select) return;
         select.innerHTML = '';
-        listaBarberos.forEach(b => {
-            const opt = document.createElement('option');
+        listaBarberos.forEach(function(b) {
+            var opt = document.createElement('option');
             opt.value = b.toLowerCase();
             opt.textContent = b.charAt(0).toUpperCase() + b.slice(1);
             select.appendChild(opt);
         });
     }
 
-    // BUSCADOR Y DESCARGADOR DE ACTUALIZACIONES SCRIPT
-    async function buscarActualizacion(manual = false) {
+    // BUSCADOR Y DESCARGADOR DE ACTUALIZACIONES
+    async function buscarActualizacion(manual) {
+        if (!manual) manual = false;
+        
         if (!navigator.onLine) {
             if (manual) alert("No hay conexión a Internet para buscar actualizaciones.");
             return;
         }
 
         try {
-            // Se le agrega timestamp para saltear el caché del navegador
-            const res = await fetch(URL_ACTUALIZACION + '?nocache=' + new Date().getTime());
+            var res = await fetch(URL_ACTUALIZACION + '?nocache=' + new Date().getTime());
             if (!res.ok) throw new Error("No disponible");
             
-            const htmlNuevo = await res.text();
+            var htmlNuevo = await res.text();
 
-            // Extraer la versión de la plantilla descargada
-            const matchVersion = htmlNuevo.match(/const\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
-            const versionRemota = matchVersion ? matchVersion[1] : null;
+            var matchVersion = htmlNuevo.match(/var\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
+            if (!matchVersion) {
+                matchVersion = htmlNuevo.match(/const\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
+            }
+            var versionRemota = matchVersion ? matchVersion[1] : null;
 
             if (versionRemota && versionRemota !== APP_VERSION) {
                 if (confirm(`🚀 ¡Hay una nueva versión de la app disponible (v${versionRemota})!\n¿Querés actualizar ahora? TUS DATOS NO SE PERDERÁN.`)) {
-                    // Guardar datos por seguridad
                     guardarLocal();
                     
-                    // Sobrescribir el archivo HTML en caliente y refrescar
                     document.open();
                     document.write(htmlNuevo);
                     document.close();
+                    
+                    window.location.reload();
                 }
             } else if (manual) {
                 alert("Ya tenés la última versión instalada (v" + APP_VERSION + ").");
@@ -446,7 +450,8 @@
         }
     }
 
-    async function sincronizarConNube(forzarLimpiezaLocal = false) {
+    async function sincronizarConNube(forzarLimpiezaLocal) {
+        if (!forzarLimpiezaLocal) forzarLimpiezaLocal = false;
         document.getElementById('statusText').innerText = 'Sincronizando...';
         
         if (!navigator.onLine) {
@@ -455,20 +460,20 @@
         }
 
         try {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+            var res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                 headers: { 'X-Master-Key': MASTER_KEY }
             });
-            const data = await res.json();
+            var data = await res.json();
 
-            let nubeHoy = data.record.registrosHoy || [];
-            let nubeHistorial = data.record.historialCierres || [];
-            let nubeBarberos = data.record.listaBarberos || listaBarberos;
+            var nubeHoy = data.record.registrosHoy || [];
+            var nubeHistorial = data.record.historialCierres || [];
+            var nubeBarberos = data.record.listaBarberos || listaBarberos;
 
             if (forzarLimpiezaLocal) {
                 nubeHoy = [];
                 registrosHoy = [];
             } else {
-                registrosHoy.forEach(r => r.sincronizado = true);
+                registrosHoy.forEach(function(r) { r.sincronizado = true; });
                 if (registrosHoy.length >= nubeHoy.length) {
                     nubeHoy = registrosHoy;
                 } else {
@@ -506,7 +511,6 @@
             }
             document.getElementById('statusText').innerText = 'Sincronizado ✅';
 
-            // Al terminar la sincronización busca actualizaciones de forma silenciosa
             buscarActualizacion(false);
 
         } catch (err) {
@@ -516,8 +520,8 @@
     }
 
     function switchTab(tabName) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
         
         if (tabName === 'diario') {
             document.querySelectorAll('.tab-btn')[0].classList.add('active');
@@ -531,9 +535,9 @@
     }
 
     async function agregarOEditarCorte() {
-        const peluquero = document.getElementById('peluquero').value;
-        const monto = parseFloat(document.getElementById('monto').value);
-        const esTransferencia = document.getElementById('esTransferencia').checked;
+        var peluquero = document.getElementById('peluquero').value;
+        var monto = parseFloat(document.getElementById('monto').value);
+        var esTransferencia = document.getElementById('esTransferencia').checked;
 
         if (isNaN(monto) || monto <= 0) {
             alert('Ingrese un monto válido');
@@ -550,11 +554,11 @@
             document.getElementById('btnAgregar').innerText = '+ Registrar Corte';
             document.getElementById('btnAgregar').style.background = 'var(--primary)';
         } else {
-            const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+            var hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
             registrosHoy.push({ 
-                peluquero, 
-                monto, 
-                hora, 
+                peluquero: peluquero, 
+                monto: monto, 
+                hora: hora, 
                 metodo: esTransferencia ? 'transferencia' : 'efectivo',
                 sincronizado: false 
             });
@@ -568,7 +572,7 @@
     }
 
     function editarCorte(idx) {
-        const reg = registrosHoy[idx];
+        var reg = registrosHoy[idx];
         document.getElementById('peluquero').value = reg.peluquero;
         document.getElementById('monto').value = reg.monto;
         document.getElementById('esTransferencia').checked = (reg.metodo === 'transferencia');
@@ -587,7 +591,7 @@
 
     async function eliminarCierre(timestamp) {
         if (confirm('¿Eliminar este cierre del historial?')) {
-            historialCierres = historialCierres.filter(c => c.timestamp !== timestamp);
+            historialCierres = historialCierres.filter(function(c) { return c.timestamp !== timestamp; });
             guardarLocal();
             renderHistorial();
             await sincronizarConNube();
@@ -595,14 +599,15 @@
     }
 
     function actualizarInterfazDiaria() {
-        const grid = document.getElementById('cardsBarberosGrid');
+        var grid = document.getElementById('cardsBarberosGrid');
+        if (!grid) return;
         grid.innerHTML = '';
 
-        let totalCortes = registrosHoy.length;
-        let totalRecaudado = registrosHoy.reduce((acc, curr) => acc + curr.monto, 0);
-        let totalEf = registrosHoy.filter(r => (r.metodo || 'efectivo') === 'efectivo').reduce((acc, curr) => acc + curr.monto, 0);
-        let totalTr = registrosHoy.filter(r => r.metodo === 'transferencia').reduce((acc, curr) => acc + curr.monto, 0);
-        let ticketPromedio = totalCortes > 0 ? Math.round(totalRecaudado / totalCortes) : 0;
+        var totalCortes = registrosHoy.length;
+        var totalRecaudado = registrosHoy.reduce(function(acc, curr) { return acc + curr.monto; }, 0);
+        var totalEf = registrosHoy.filter(function(r) { return (r.metodo || 'efectivo') === 'efectivo'; }).reduce(function(acc, curr) { return acc + curr.monto; }, 0);
+        var totalTr = registrosHoy.filter(function(r) { return r.metodo === 'transferencia'; }).reduce(function(acc, curr) { return acc + curr.monto; }, 0);
+        var ticketPromedio = totalCortes > 0 ? Math.round(totalRecaudado / totalCortes) : 0;
 
         grid.innerHTML += `
             <div class="card card-total">
@@ -612,13 +617,13 @@
             </div>
         `;
 
-        listaBarberos.forEach((barbero, idx) => {
-            const bKey = barbero.toLowerCase();
-            const cortesB = registrosHoy.filter(r => r.peluquero === bKey);
-            const efB = cortesB.filter(r => (r.metodo || 'efectivo') === 'efectivo').reduce((a, b) => a + b.monto, 0);
-            const trB = cortesB.filter(r => r.metodo === 'transferencia').reduce((a, b) => a + b.monto, 0);
-            const totB = efB + trB;
-            const color = coloresBarberos[idx % coloresBarberos.length];
+        listaBarberos.forEach(function(barbero, idx) {
+            var bKey = barbero.toLowerCase();
+            var cortesB = registrosHoy.filter(function(r) { return r.peluquero === bKey; });
+            var efB = cortesB.filter(function(r) { return (r.metodo || 'efectivo') === 'efectivo'; }).reduce(function(a, b) { return a + b.monto; }, 0);
+            var trB = cortesB.filter(function(r) { return r.metodo === 'transferencia'; }).reduce(function(a, b) { return a + b.monto; }, 0);
+            var totB = efB + trB;
+            var color = coloresBarberos[idx % coloresBarberos.length];
 
             grid.innerHTML += `
                 <div class="card" style="background-color: ${color}">
@@ -629,14 +634,14 @@
             `;
         });
 
-        const tbody = document.getElementById('tablaRegistrosDiarios');
+        var tbody = document.getElementById('tablaRegistrosDiarios');
         tbody.innerHTML = '';
 
-        registrosHoy.forEach((reg, idx) => {
-            const metodo = reg.metodo || 'efectivo';
-            const iconSync = reg.sincronizado ? '☁️ Sincronizado' : '📱 Local (Pendiente)';
+        registrosHoy.forEach(function(reg, idx) {
+            var metodo = reg.metodo || 'efectivo';
+            var iconSync = reg.sincronizado ? '☁️ Sincronizado' : '📱 Local (Pendiente)';
 
-            const tr = document.createElement('tr');
+            var tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><strong>${reg.hora}</strong></td>
                 <td style="text-transform: capitalize;">${reg.peluquero}</td>
@@ -661,32 +666,32 @@
             return;
         }
 
-        const fechaSugerida = new Date().toISOString().split('T')[0];
-        const fechaIngresada = prompt("Confirma la FECHA para este cierre (AAAA-MM-DD):", fechaSugerida);
+        var fechaSugerida = new Date().toISOString().split('T')[0];
+        var fechaIngresada = prompt("Confirma la FECHA para este cierre (AAAA-MM-DD):", fechaSugerida);
 
         if (!fechaIngresada) return;
 
-        let detalleBarberos = {};
-        listaBarberos.forEach(b => detalleBarberos[b.toLowerCase()] = 0);
+        var detalleBarberos = {};
+        listaBarberos.forEach(function(b) { detalleBarberos[b.toLowerCase()] = 0; });
 
-        let efTotal = 0;
-        let trTotal = 0;
+        var efTotal = 0;
+        var trTotal = 0;
 
-        registrosHoy.forEach(r => {
-            const m = r.metodo || 'efectivo';
+        registrosHoy.forEach(function(r) {
+            var m = r.metodo || 'efectivo';
             if (m === 'transferencia') trTotal += r.monto;
             else efTotal += r.monto;
 
-            const bKey = r.peluquero.toLowerCase();
+            var bKey = r.peluquero.toLowerCase();
             if (detalleBarberos[bKey] !== undefined) {
                 detalleBarberos[bKey] += (r.monto * 0.5);
             }
         });
 
-        const partesFecha = fechaIngresada.split('-');
-        const fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+        var partesFecha = fechaIngresada.split('-');
+        var fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
 
-        const cierre = {
+        var cierre = {
             fecha: fechaIngresada,
             fechaTexto: fechaFormateada,
             timestamp: new Date(fechaIngresada + 'T12:00:00').getTime(),
@@ -728,12 +733,12 @@
     }
 
     function renderHistorial() {
-        const filtro = document.getElementById('filtroTiempo').value;
-        const tbody = document.getElementById('tablaHistorial');
-        const head = document.getElementById('headHistorial');
+        var filtro = document.getElementById('filtroTiempo').value;
+        var tbody = document.getElementById('tablaHistorial');
+        var head = document.getElementById('headHistorial');
         tbody.innerHTML = '';
 
-        let headHTML = `
+        var headHTML = `
             <tr>
                 <th>Fecha Cierre</th>
                 <th>Cortes</th>
@@ -741,23 +746,23 @@
                 <th>Efectivo</th>
                 <th>Transferencias</th>
         `;
-        listaBarberos.forEach(b => {
+        listaBarberos.forEach(function(b) {
             headHTML += `<th style="text-transform:capitalize;">${b}</th>`;
         });
         headHTML += `<th>Acción</th></tr>`;
         head.innerHTML = headHTML;
 
-        const ahora = new Date().getTime();
-        let limiteMs = 0;
+        var ahora = new Date().getTime();
+        var limiteMs = 0;
 
-        let fechaDesdeVal = document.getElementById('fechaDesde').value;
-        let fechaHastaVal = document.getElementById('fechaHasta').value;
+        var fechaDesdeVal = document.getElementById('fechaDesde').value;
+        var fechaHastaVal = document.getElementById('fechaHasta').value;
 
-        const filtrados = historialCierres.filter(c => {
+        var filtrados = historialCierres.filter(function(c) {
             if (filtro === 'personalizado' && (fechaDesdeVal || fechaHastaVal)) {
-                let cFecha = new Date(c.fecha + 'T00:00:00').getTime();
-                let fDesde = fechaDesdeVal ? new Date(fechaDesdeVal + 'T00:00:00').getTime() : 0;
-                let fHasta = fechaHastaVal ? new Date(fechaHastaVal + 'T23:59:59').getTime() : Infinity;
+                var cFecha = new Date(c.fecha + 'T00:00:00').getTime();
+                var fDesde = fechaDesdeVal ? new Date(fechaDesdeVal + 'T00:00:00').getTime() : 0;
+                var fHasta = fechaHastaVal ? new Date(fechaHastaVal + 'T23:59:59').getTime() : Infinity;
 
                 return cFecha >= fDesde && cFecha <= fHasta;
             }
@@ -769,25 +774,25 @@
             return (ahora - c.timestamp) <= limiteMs;
         });
 
-        filtrados.sort((a, b) => b.timestamp - a.timestamp);
+        filtrados.sort(function(a, b) { return b.timestamp - a.timestamp; });
 
-        let balRecaudado = 0;
-        let balCortes = 0;
-        let balEf = 0;
-        let balTr = 0;
-        let balBarberos = {};
-        listaBarberos.forEach(b => balBarberos[b.toLowerCase()] = 0);
+        var balRecaudado = 0;
+        var balCortes = 0;
+        var balEf = 0;
+        var balTr = 0;
+        var balBarberos = {};
+        listaBarberos.forEach(function(b) { balBarberos[b.toLowerCase()] = 0; });
 
-        filtrados.forEach(c => {
+        filtrados.forEach(function(c) {
             balRecaudado += (c.recaudacionTotal || 0);
             balCortes += (c.cortesTotales || 0);
             balEf += (c.efectivoTotal || 0);
             balTr += (c.transferenciaTotal || 0);
 
-            let rowBarberosHTML = '';
-            listaBarberos.forEach(b => {
-                const bKey = b.toLowerCase();
-                let val = 0;
+            var rowBarberosHTML = '';
+            listaBarberos.forEach(function(b) {
+                var bKey = b.toLowerCase();
+                var val = 0;
                 if (c.pagosBarberos && c.pagosBarberos[bKey] !== undefined) {
                     val = c.pagosBarberos[bKey];
                 } else if (c[`${bKey}50`] !== undefined) {
@@ -797,7 +802,7 @@
                 rowBarberosHTML += `<td>$${val.toLocaleString()}</td>`;
             });
 
-            const tr = document.createElement('tr');
+            var tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><strong>${c.fechaTexto}</strong></td>
                 <td>${c.cortesTotales}</td>
@@ -810,7 +815,7 @@
             tbody.appendChild(tr);
         });
 
-        const balGrid = document.getElementById('balanceGrid');
+        var balGrid = document.getElementById('balanceGrid');
         balGrid.innerHTML = `
             <div class="balance-item">
                 <h4>Total Recaudado</h4>
@@ -830,8 +835,8 @@
             </div>
         `;
 
-        listaBarberos.forEach(b => {
-            const bKey = b.toLowerCase();
+        listaBarberos.forEach(function(b) {
+            var bKey = b.toLowerCase();
             balGrid.innerHTML += `
                 <div class="balance-item">
                     <h4>${b}</h4>
@@ -865,10 +870,10 @@
     }
 
     function renderListaModalBarberos() {
-        const contenedor = document.getElementById('listaBarberosEdit');
+        var contenedor = document.getElementById('listaBarberosEdit');
         contenedor.innerHTML = '';
 
-        listaBarberos.forEach((b, idx) => {
+        listaBarberos.forEach(function(b, idx) {
             contenedor.innerHTML += `
                 <div class="barber-item-edit">
                     <input type="text" value="${b}" onchange="renombrarBarbero(${idx}, this.value)">
@@ -879,7 +884,7 @@
     }
 
     function agregarBarberoNuevo() {
-        const val = document.getElementById('nuevoBarberoNombre').value.trim();
+        var val = document.getElementById('nuevoBarberoNombre').value.trim();
         if (val) {
             listaBarberos.push(val);
             document.getElementById('nuevoBarberoNombre').value = '';
@@ -903,22 +908,22 @@
     }
 
     function exportarBackup() {
-        const data = { listaBarberos, registrosHoy, historialCierres };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const a = document.createElement('a');
+        var data = { listaBarberos: listaBarberos, registrosHoy: registrosHoy, historialCierres: historialCierres };
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `backup_barberia_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
     }
 
     function importarBackup(e) {
-        const file = e.target.files[0];
+        var file = e.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
+        var reader = new FileReader();
         reader.onload = function(evt) {
             try {
-                const parsed = JSON.parse(evt.target.result);
+                var parsed = JSON.parse(evt.target.result);
                 if (parsed.listaBarberos) listaBarberos = parsed.listaBarberos;
                 if (parsed.registrosHoy) registrosHoy = parsed.registrosHoy;
                 if (parsed.historialCierres) historialCierres = parsed.historialCierres;
@@ -935,18 +940,19 @@
         reader.readAsText(file);
     }
 
-    window.addEventListener('beforeunload', (e) => {
-        const hayPendientes = registrosHoy.some(r => !r.sincronizado);
+    window.addEventListener('beforeunload', function(e) {
+        var hayPendientes = registrosHoy.some(function(r) { return !r.sincronizado; });
         if (hayPendientes) {
             e.preventDefault();
             e.returnValue = '';
         }
     });
 
-    window.addEventListener('online', () => {
+    window.addEventListener('online', function() {
         sincronizarConNube();
     });
 
+    // INICIALIZACIÓN
     cargarLocal();
     actualizarInterfazDiaria();
     sincronizarConNube();
