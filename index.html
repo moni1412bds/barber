@@ -251,7 +251,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.3</span></h1>
+        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.5</span></h1>
         <div class="date-badge" id="fechaHoy">--/--/----</div>
     </div>
 
@@ -399,7 +399,7 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN DE VERSIÓN V1.0.3
+    // CONFIGURACIÓN DE VERSIÓN V1.0.5
     var APP_VERSION = "1.0.5";
     var URL_ACTUALIZACION = "https://raw.githubusercontent.com/moni1412bds/barber/main/index.html";
 
@@ -448,7 +448,7 @@
         });
     }
 
-    // FUNCIÓN DE ACTUALIZACIÓN CON MÓDULO FS (NODE.JS / NW.JS)
+    // BUSCAR ACTUALIZACIÓN Y ESCRIBIR EN DISCO HARDWARE CON RECARGA DE RUTA
     async function buscarActualizacion(manual) {
         if (!manual) manual = false;
         
@@ -470,31 +470,33 @@
             var versionRemota = matchVersion ? matchVersion[1] : null;
 
             if (versionRemota && versionRemota !== APP_VERSION) {
-                if (confirm(`🚀 ¡Hay una nueva versión disponible (v${versionRemota})!\n¿Querés actualizar el archivo local? TUS DATOS NO SE PERDERÁN.`)) {
+                if (confirm(`🚀 ¡Hay una nueva versión disponible (v${versionRemota})!\n¿Querés actualizar el ejecutable local? TUS DATOS NO SE PERDERÁN.`)) {
                     
                     guardarLocal();
 
-                    // DETECCIÓN Y USO DEL MÓDULO 'fs' DE NODE.JS (NW.JS)
+                    // DETECCIÓN Y ESCRITURA EN DISCO LOCAL DENTRO DE NW.JS
                     if (typeof require !== 'undefined') {
                         try {
                             const fs = require('fs');
                             const path = require('path');
                             
-                            // Obtiene la ruta física exacta del archivo index.html
+                            // Obtiene la ruta física del ejecutable o carpeta donde corre el .exe
                             const rutaIndex = path.join(process.cwd(), 'index.html');
                             
-                            // Sobrescribe físicamente el archivo en el disco duro
+                            // Sobrescribe físicamente el archivo en el disco
                             fs.writeFileSync(rutaIndex, htmlNuevo, 'utf8');
                             
-                            alert("✅ ¡El archivo local index.html fue actualizado con éxito! La app se reiniciará.");
-                            window.location.reload();
+                            alert("✅ ¡Archivo local actualizado con éxito! La app se reiniciará con la nueva versión.");
+                            
+                            // Redirige directamente al archivo index físico con timestamp para evitar caché
+                            window.location.href = rutaIndex + '?v=' + new Date().getTime();
                             return;
                         } catch (errNode) {
                             alert("Error al escribir en el disco: " + errNode.message);
                         }
                     }
 
-                    // Respaldo en caso de ejecutarse directamente en un navegador común
+                    // Respaldo navegador web común
                     document.open();
                     document.write(htmlNuevo);
                     document.close();
