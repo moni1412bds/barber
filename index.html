@@ -202,7 +202,42 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 999;
         }
-        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 480px; }
+        /* Contenido del modal con posición relativa para ubicar el botón de cierre */
+        .modal-content { 
+            position: relative; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 12px; 
+            width: 90%; 
+            max-width: 480px; 
+        }
+        
+        /* Botón Cruz (X) Roja de Cierre */
+        .btn-modal-close-x {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            line-height: 1;
+            transition: background 0.2s ease;
+        }
+
+        .btn-modal-close-x:hover {
+            background: #dc2626;
+        }
+
         .barber-item-edit { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
 
         @media print {
@@ -216,7 +251,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.1 (Actualizado)</span></h1>
+        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.2 (Actualizado)</span></h1>
         <div class="date-badge" id="fechaHoy">--/--/----</div>
     </div>
 
@@ -332,6 +367,9 @@
 <!-- MODAL CONFIGURACIÓN -->
 <div class="modal-bg" id="modalBarberos">
     <div class="modal-content">
+        <!-- BOTÓN CRUZ DE CIERRE AGREGADO -->
+        <button class="btn-modal-close-x" onclick="cerrarModalBarberos()" title="Cerrar">✕</button>
+
         <h3 style="margin-top:0;">⚙️ Configurar Barberos</h3>
         <p style="font-size:0.85rem; color:#64748b;">Añade, renombra o elimina miembros del equipo:</p>
         
@@ -362,8 +400,8 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN DE VERSIÓN Y SERVIDOR (Uso de 'var' para evitar re-declaración)
-    var APP_VERSION = "1.0.1";
+    // CONFIGURACIÓN DE VERSIÓN Y SERVIDOR
+    var APP_VERSION = "1.0.2";
     var URL_ACTUALIZACION = "https://raw.githubusercontent.com/moni1412bds/barber/main/index.html";
 
     var BIN_ID = '6aad8afeffd5d160531714d0';
