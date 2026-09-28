@@ -7,35 +7,72 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      background-color: #f4f6f9;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding-bottom: 80px;
+      background-color: #f8f9fa;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding-bottom: 30px;
     }
-    .card-custom {
-      border-radius: 12px;
-      border: none;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-    .status-bar {
+    .status-header {
+      background-color: #111827;
+      color: #ffffff;
+      padding: 6px 12px;
       font-size: 0.85rem;
       font-weight: 600;
+      text-align: center;
+    }
+    .main-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f0f0f0;
+      margin-bottom: 20px;
+    }
+    .barbero-card {
+      border-radius: 12px;
+      padding: 15px;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .badge-transf {
+      background-color: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+      font-weight: 600;
+      padding: 5px 10px;
+    }
+    .badge-efec {
+      background-color: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+      font-weight: 600;
+      padding: 5px 10px;
+    }
+    .nav-tabs .nav-link {
+      color: #4b5563;
+      font-weight: 600;
+      border: none;
+      padding: 10px 20px;
     }
     .nav-tabs .nav-link.active {
-      font-weight: bold;
-      border-bottom: 3px solid #0d6efd;
+      color: #2563eb;
+      border-bottom: 3px solid #2563eb;
+      background: transparent;
     }
   </style>
 </head>
 <body>
 
-  <!-- Barra de Estado -->
-  <div class="bg-dark text-white text-center py-1 status-bar">
-    Estado: <span id="statusText">Iniciando...</span>
+  <!-- Estado de Sincronización -->
+  <div class="status-header">
+    <span id="statusText">Cargando...</span>
   </div>
 
-  <div class="container mt-3">
-    <!-- Pestañas de Navegación -->
-    <ul class="nav nav-tabs mb-3" id="mainTabs" role="tablist">
+  <div class="container my-3" style="max-width: 600px;">
+    
+    <!-- Navegación -->
+    <ul class="nav nav-tabs justify-content-center mb-3" id="mainTabs" role="tablist">
       <li class="nav-item">
         <button class="nav-link active" id="tab-registro-link" data-bs-toggle="tab" data-bs-target="#tab-registro" type="button">Cortes de Hoy</button>
       </li>
@@ -49,100 +86,96 @@
 
     <div class="tab-content" id="mainTabsContent">
       
-      <!-- PESTAÑA: REGISTRO Y CORTES DEL DÍA -->
+      <!-- PESTAÑA CORTES -->
       <div class="tab-pane fade show active" id="tab-registro" role="tabpanel">
         
-        <!-- Tarjetas Resumen Barberos -->
-        <div id="barberosCards" class="row g-2 mb-3">
-          <!-- Se generan dinámicamente -->
-        </div>
+        <!-- Tarjetas Barberos -->
+        <div id="barberosCards" class="row g-2 mb-3"></div>
 
-        <!-- Formulario para Registrar Corte -->
-        <div class="card card-custom p-3 mb-3">
+        <!-- Formulario Agregar Corte -->
+        <div class="main-card">
           <div class="row g-2 align-items-center">
-            <div class="col-6 col-md-3">
-              <label class="form-label mb-1 fw-bold">Peluquero</label>
-              <select id="selectBarbero" class="form-select"></select>
+            <div class="col-6">
+              <label class="form-label small text-muted mb-1 fw-bold">Peluquero</label>
+              <select id="selectBarbero" class="form-select form-select-lg fs-6"></select>
             </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label mb-1 fw-bold">Monto ($)</label>
-              <input type="number" id="montoCorte" class="form-control" value="10000" step="500">
+            <div class="col-6">
+              <label class="form-label small text-muted mb-1 fw-bold">Monto ($)</label>
+              <input type="number" id="montoCorte" class="form-control form-control-lg fs-6" value="10000" step="500">
             </div>
-            <div class="col-6 col-md-3 d-flex align-items-end">
-              <div class="form-check mt-3">
+            <div class="col-6 mt-3">
+              <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="checkTransferencia">
-                <label class="form-check-label fw-bold" for="checkTransferencia">
+                <label class="form-check-label fw-bold small" for="checkTransferencia">
                   💳 Transferencia
                 </label>
               </div>
             </div>
-            <div class="col-6 col-md-3 d-flex align-items-end">
-              <button class="btn btn-dark w-100 fw-bold" onclick="registrarCorte()">+ Registrar Corte</button>
+            <div class="col-6 mt-3">
+              <button class="btn btn-dark w-100 fw-bold py-2" onclick="registrarCorte()">+ Registrar Corte</button>
             </div>
           </div>
         </div>
 
-        <!-- Encabezado y Botón Cierre -->
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="m-0 fw-bold">Cortes del Día</h5>
-          <button class="btn btn-danger btn-sm fw-bold" onclick="realizarCierreDiario()">🔒 Realizar Cierre Diario</button>
+        <!-- Tabla -->
+        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+          <h5 class="fw-bold m-0 text-secondary">Cortes del Día</h5>
+          <button class="btn btn-danger btn-sm fw-bold px-3 rounded-pill" onclick="realizarCierreDiario()">🔒 Realizar Cierre Diario</button>
         </div>
 
-        <!-- Tabla de Cortes del Día -->
-        <div class="card card-custom p-2 table-responsive">
-          <table class="table table-hover align-middle mb-0 text-center">
-            <thead class="table-light">
-              <tr>
-                <th>Hora</th>
-                <th>Peluquero</th>
-                <th>Medio</th>
-                <th>Monto Corte</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody id="tablaCortesBody">
-              <!-- Filas dinámicas -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- PESTAÑA: HISTORIAL -->
-      <div class="tab-pane fade" id="tab-historial" role="tabpanel">
-        <h5 class="fw-bold mb-3">Historial de Cierres Diarios</h5>
-        <div id="historialContainer">
-          <!-- Tarjetas/Listas dinámicas de cierres -->
-        </div>
-      </div>
-
-      <!-- PESTAÑA: OPCIONES -->
-      <div class="tab-pane fade" id="tab-opciones" role="tabpanel">
-        <div class="card card-custom p-3 mb-3">
-          <h6 class="fw-bold">Gestión de Barberos</h6>
-          <div class="input-group mb-2">
-            <input type="text" id="nuevoBarberoNombre" class="form-control" placeholder="Nombre del Barbero">
-            <button class="btn btn-primary" onclick="agregarBarbero()">Agregar</button>
+        <div class="main-card p-0 overflow-hidden">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-center">
+              <thead class="bg-light text-muted small">
+                <tr>
+                  <th>Hora</th>
+                  <th>Peluquero</th>
+                  <th>Medio</th>
+                  <th>Monto Corte</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tablaCortesBody"></tbody>
+            </table>
           </div>
-          <ul id="listaBarberosUl" class="list-group"></ul>
         </div>
 
-        <div class="card card-custom p-3 mb-3">
-          <h6 class="fw-bold">Credenciales JSONBin</h6>
+      </div>
+
+      <!-- PESTAÑA HISTORIAL -->
+      <div class="tab-pane fade" id="tab-historial" role="tabpanel">
+        <h5 class="fw-bold mb-3 text-secondary">Historial de Cierres Diarios</h5>
+        <div id="historialContainer"></div>
+      </div>
+
+      <!-- PESTAÑA OPCIONES -->
+      <div class="tab-pane fade" id="tab-opciones" role="tabpanel">
+        <div class="main-card">
+          <h6 class="fw-bold mb-3">Gestión de Barberos</h6>
+          <div class="input-group mb-3">
+            <input type="text" id="nuevoBarberoNombre" class="form-control" placeholder="Nombre peluquero">
+            <button class="btn btn-primary fw-bold" onclick="agregarBarbero()">Agregar</button>
+          </div>
+          <ul id="listaBarberosUl" class="list-group list-group-flush"></ul>
+        </div>
+
+        <div class="main-card">
+          <h6 class="fw-bold mb-3">Credenciales JSONBin</h6>
           <div class="mb-2">
-            <label class="form-label mb-1">BIN ID</label>
+            <label class="form-label small text-muted mb-1">BIN ID</label>
             <input type="text" id="inputBinId" class="form-control">
           </div>
-          <div class="mb-2">
-            <label class="form-label mb-1">Master Key</label>
+          <div class="mb-3">
+            <label class="form-label small text-muted mb-1">Master Key</label>
             <input type="password" id="inputMasterKey" class="form-control">
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="guardarConfiguracion()">Guardar Configuración</button>
+          <button class="btn btn-secondary w-100 fw-bold" onclick="guardarConfiguracion()">Guardar Credenciales</button>
         </div>
 
-        <div class="card card-custom p-3 border-danger">
-          <h6 class="fw-bold text-danger">Zona de Riesgo</h6>
-          <p class="text-muted small">Usar esta opción solo si la app se trabó o muestra registros antiguos desfasados.</p>
-          <button class="btn btn-outline-danger w-100 fw-bold" onclick="forzarLimpiezaLocal()">🚨 Forzar Limpieza Diaria ($0)</button>
+        <div class="main-card border-danger">
+          <h6 class="fw-bold text-danger mb-2">Zona de Mantenimiento</h6>
+          <p class="text-muted small mb-3">Si tenés registros viejos que no se borran, forzá el reseteo de la lista de hoy.</p>
+          <button class="btn btn-outline-danger w-100 fw-bold" onclick="forzarLimpiezaLocal()">🚨 Limpiar Registro de Hoy ($0)</button>
         </div>
       </div>
 
@@ -151,7 +184,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // --- VARIABLES DE ESTADO Y CONFIGURACIÓN ---
     let BIN_ID = localStorage.getItem('BIN_ID') || '';
     let MASTER_KEY = localStorage.getItem('MASTER_KEY') || '';
 
@@ -159,9 +191,8 @@
     let registrosHoy = JSON.parse(localStorage.getItem('registrosHoy')) || [];
     let historialCierres = JSON.parse(localStorage.getItem('historialCierres')) || [];
 
-    const coloresBarberos = ['#ffc107', '#6f42c1', '#0d6efd', '#198754', '#fd7e14', '#20c997'];
+    const coloresBarberos = ['#f59e0b', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899', '#14b8a6'];
 
-    // --- INICIALIZACIÓN ---
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('inputBinId').value = BIN_ID;
       document.getElementById('inputMasterKey').value = MASTER_KEY;
@@ -172,29 +203,33 @@
       if (BIN_ID && MASTER_KEY) {
         sincronizarConNube();
       } else {
-        document.getElementById('statusText').innerText = 'Modo Local (Sin JSONBin Configurado)';
+        document.getElementById('statusText').innerText = 'Modo Local (Sin credenciales)';
       }
     });
 
-    // --- ALMACENAMIENTO LOCAL ---
     function guardarLocal() {
       localStorage.setItem('registrosHoy', JSON.stringify(registrosHoy));
       localStorage.setItem('historialCierres', JSON.stringify(historialCierres));
       localStorage.setItem('listaBarberos', JSON.stringify(listaBarberos));
     }
 
-    // --- SINCRONIZACIÓN CON JSONBIN (LÓGICA CORREGIDA) ---
-    async function sincronizarConNube(forzarLimpiezaLocal = false) {
+    // Normalizador de datos para evitar "undefined"
+    function normalizarCorte(c) {
+      return {
+        id: c.id || Date.now(),
+        hora: c.hora || '12:00 p. m.',
+        barbero: c.barbero || c.peluquero || c.Peluquero || 'Desconocido',
+        medio: c.medio || c.metodo || c.Medio || (c.transferencia ? 'Transf.' : 'Efec.'),
+        monto: parseFloat(c.monto || c.Monto || c.montoCorte || 0)
+      };
+    }
+
+    async function sincronizarConNube(limpiarHoy = false) {
       const elemStatus = document.getElementById('statusText');
       if (elemStatus) elemStatus.innerText = 'Sincronizando...';
 
       if (!BIN_ID || !MASTER_KEY) {
-        if (elemStatus) elemStatus.innerText = 'Modo Local (Sin credenciales de nube)';
-        return;
-      }
-
-      if (!navigator.onLine) {
-        if (elemStatus) elemStatus.innerText = 'Sin Conexión (Modo Offline) 📡❌';
+        if (elemStatus) elemStatus.innerText = 'Sin credenciales configuradas';
         return;
       }
 
@@ -203,29 +238,38 @@
           headers: { 'X-Master-Key': MASTER_KEY }
         });
         
-        if (!res.ok) throw new Error('Error al conectar con JSONBin');
+        if (!res.ok) throw new Error('Error al conectar');
 
         const data = await res.json();
-        let nubeHoy = data.record.registrosHoy || [];
-        let nubeHistorial = data.record.historialCierres || [];
-        let nubeBarberos = data.record.listaBarberos || listaBarberos;
+        const rec = data.record || {};
 
-        if (forzarLimpiezaLocal) {
-          nubeHoy = [];
+        let nubeHoy = (rec.registrosHoy || rec.cortes || []).map(normalizarCorte);
+        let nubeHistorial = rec.historialCierres || rec.historial || [];
+        let nubeBarberos = rec.listaBarberos || rec.barberos || [];
+
+        if (limpiarHoy) {
           registrosHoy = [];
         } else {
-          // LÓGICA CORREGIDA: Si en la nube hay menos cortes o está vacía (por cierre previo), 
-          // prevalece siempre el estado de la nube para no restaurar registros antiguos.
           registrosHoy = nubeHoy;
         }
 
-        if (nubeHistorial.length >= historialCierres.length) {
+        if (nubeHistorial.length > 0) {
           historialCierres = nubeHistorial;
         }
 
-        listaBarberos = Array.from(new Set([...listaBarberos, ...nubeBarberos]));
+        if (nubeBarberos.length > 0) {
+          // Normalizar nombres a Mayúscula Inicial
+          const unicos = new Set();
+          nubeBarberos.forEach(b => {
+            if (b) {
+              const nombreLimpio = b.trim().charAt(0).toUpperCase() + b.trim().slice(1).toLowerCase();
+              unicos.add(nombreLimpio);
+            }
+          });
+          listaBarberos = Array.from(unicos);
+        }
 
-        // Guardar estado unificado en JSONBin
+        // Guardar actualización en la nube
         await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
           method: 'PUT',
           headers: {
@@ -243,26 +287,21 @@
         actualizarSelectoresBarberos();
         actualizarInterfazDiaria();
         
-        if (document.getElementById('tab-historial').classList.contains('active')) {
-          renderHistorial();
-        }
-
-        if (elemStatus) elemStatus.innerText = 'Sincronizado ✅ (v1.1.0)';
+        if (elemStatus) elemStatus.innerText = 'Estado: Sincronizado ✅';
 
       } catch (err) {
         console.error(err);
-        if (elemStatus) elemStatus.innerText = 'Guardado solo Local (Offline / Error de Red) ⚠️';
+        if (elemStatus) elemStatus.innerText = 'Error de conexión / Guardado local';
       }
     }
 
-    // --- ACCIONES DE CORTES ---
     function registrarCorte() {
       const barbero = document.getElementById('selectBarbero').value;
       const monto = parseFloat(document.getElementById('montoCorte').value) || 0;
       const esTransferencia = document.getElementById('checkTransferencia').checked;
 
       if (!barbero || monto <= 0) {
-        alert('Por favor ingrese un monto válido.');
+        alert('Ingresá un monto válido.');
         return;
       }
 
@@ -283,8 +322,8 @@
     }
 
     function eliminarCorte(id) {
-      if (confirm('¿Seguro que querés eliminar este corte?')) {
-        registrosHoy = registrosHoy.filter(corte => corte.id !== id);
+      if (confirm('¿Eliminar este corte?')) {
+        registrosHoy = registrosHoy.filter(c => c.id !== id);
         guardarLocal();
         actualizarInterfazDiaria();
         sincronizarConNube();
@@ -293,11 +332,11 @@
 
     function realizarCierreDiario() {
       if (registrosHoy.length === 0) {
-        alert('No hay cortes registrados hoy.');
+        alert('No hay cortes para cerrar.');
         return;
       }
 
-      if (confirm('¿Confirmás realizar el Cierre Diario? Se guardará en el historial y se limpiará el registro de hoy.')) {
+      if (confirm('¿Hacer Cierre Diario? Se borrarán los cortes de hoy y pasarán al Historial.')) {
         const fechaHoy = new Date().toLocaleDateString('es-AR');
         
         const resumenCierre = {
@@ -312,50 +351,50 @@
         guardarLocal();
         actualizarInterfazDiaria();
         sincronizarConNube(true);
-        alert('Cierre realizado con éxito.');
+        alert('Cierre registrado correctamente.');
       }
     }
 
-    // --- RENDERING E INTERFAZ ---
     function actualizarInterfazDiaria() {
-      // 1. Tarjetas Resumen Barberos
+      // 1. Tarjetas
       const barberosCardsContainer = document.getElementById('barberosCards');
       barberosCardsContainer.innerHTML = '';
 
       listaBarberos.forEach((barbero, idx) => {
-        const cortesBarbero = registrosHoy.filter(c => c.barbero === barbero);
+        const cortesBarbero = registrosHoy.filter(c => c.barbero.toLowerCase() === barbero.toLowerCase());
         const cantCortes = cortesBarbero.length;
-        const totalEfec = cortesBarbero.filter(c => c.medio === 'Efec.').reduce((sum, c) => sum + c.monto, 0);
-        const totalTransf = cortesBarbero.filter(c => c.medio === 'Transf.').reduce((sum, c) => sum + c.monto, 0);
+        const totalEfec = cortesBarbero.filter(c => c.medio.includes('Efe') || c.medio === 'Efec.').reduce((sum, c) => sum + c.monto, 0);
+        const totalTransf = cortesBarbero.filter(c => c.medio.includes('Tra') || c.medio === 'Transf.').reduce((sum, c) => sum + c.monto, 0);
         const totalGeneral = totalEfec + totalTransf;
 
         const colorBg = coloresBarberos[idx % coloresBarberos.length];
 
         const cardHTML = `
-          <div class="col-6 col-md-4">
-            <div class="card p-2 text-white shadow-sm text-center" style="background-color: ${colorBg}; border-radius: 10px;">
-              <h6 class="mb-0 fw-bold">${barbero}</h6>
-              <h4 class="fw-bold my-1">$${totalGeneral.toLocaleString()}</h4>
-              <small class="d-block">${cantCortes} cortes</small>
-              <small class="d-block style="font-size: 0.75rem;">Ef: $${totalEfec.toLocaleString()} | Tr: $${totalTransf.toLocaleString()}</small>
+          <div class="col-4">
+            <div class="barbero-card" style="background-color: ${colorBg};">
+              <div class="fs-6 fw-bold mb-1">${barbero}</div>
+              <div class="fs-4 fw-bolder">$${totalGeneral.toLocaleString()}</div>
+              <div class="small fw-normal mb-1">${cantCortes} cortes</div>
+              <div style="font-size: 0.7rem; opacity: 0.9;">Ef: $${totalEfec.toLocaleString()} | Tr: $${totalTransf.toLocaleString()}</div>
             </div>
           </div>
         `;
         barberosCardsContainer.innerHTML += cardHTML;
       });
 
-      // 2. Tabla Cortes
+      // 2. Tabla
       const tablaBody = document.getElementById('tablaCortesBody');
       tablaBody.innerHTML = '';
 
       if (registrosHoy.length === 0) {
-        tablaBody.innerHTML = '<tr><td colspan="5" class="text-muted">No hay cortes registrados hoy</td></tr>';
+        tablaBody.innerHTML = '<tr><td colspan="5" class="text-muted py-3">No hay cortes registrados hoy</td></tr>';
         return;
       }
 
       registrosHoy.forEach(c => {
-        const badgeClass = c.medio === 'Transf.' ? 'bg-primary-subtle text-primary border border-primary' : 'bg-success-subtle text-success border border-success';
-        const icono = c.medio === 'Transf.' ? '💳' : '💵';
+        const esTransf = c.medio.includes('Tra') || c.medio === 'Transf.';
+        const badgeClass = esTransf ? 'badge-transf' : 'badge-efec';
+        const icono = esTransf ? '💳' : '💵';
 
         const row = `
           <tr>
@@ -364,7 +403,7 @@
             <td><span class="badge ${badgeClass}">${icono} ${c.medio}</span></td>
             <td class="fw-bold">$${c.monto.toLocaleString()}</td>
             <td>
-              <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="eliminarCorte(${c.id})">✕</button>
+              <button class="btn btn-sm btn-outline-danger border-0 fw-bold" onclick="eliminarCorte(${c.id})">✕</button>
             </td>
           </tr>
         `;
@@ -376,29 +415,33 @@
       const container = document.getElementById('historialContainer');
       container.innerHTML = '';
 
-      if (historialCierres.length === 0) {
-        container.innerHTML = '<p class="text-muted">No hay cierres guardados en el historial.</p>';
+      if (!historialCierres || historialCierres.length === 0) {
+        container.innerHTML = '<div class="main-card text-muted text-center py-4">No hay cierres guardados en el historial.</div>';
         return;
       }
 
-      historialCierres.forEach((cierre, index) => {
-        const totalDia = cierre.cortes.reduce((sum, c) => sum + c.monto, 0);
-        
+      historialCierres.forEach(cierre => {
+        const cortesCierre = (cierre.cortes || cierre.registros || []).map(normalizarCorte);
+        const totalDia = cortesCierre.reduce((sum, c) => sum + c.monto, 0);
+
         let detalleHTML = '';
-        cierre.cortes.forEach(c => {
+        cortesCierre.forEach(c => {
           detalleHTML += `
-            <li class="list-group-item d-flex justify-content-between align-items-center py-1">
-              <small>${c.hora} - <strong>${c.barbero}</strong> (${c.medio})</small>
+            <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0 border-bottom">
+              <small class="text-secondary">${c.hora} - <strong>${c.barbero}</strong> (${c.medio})</small>
               <small class="fw-bold">$${c.monto.toLocaleString()}</small>
             </li>
           `;
         });
 
         const card = `
-          <div class="card card-custom p-3 mb-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h6 class="fw-bold m-0">📅 ${cierre.fecha} (Cierre: ${cierre.cierreHora})</h6>
-              <span class="badge bg-success fs-6">$${totalDia.toLocaleString()}</span>
+          <div class="main-card mb-3">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+              <div>
+                <h6 class="fw-bold m-0">📅 ${cierre.fecha || 'Sin Fecha'}</h6>
+                <small class="text-muted">Cierre: ${cierre.cierreHora || ''}</small>
+              </div>
+              <span class="badge bg-success fs-6 px-3 py-2">$${totalDia.toLocaleString()}</span>
             </div>
             <ul class="list-group list-group-flush mb-0">
               ${detalleHTML}
@@ -419,34 +462,36 @@
       listaBarberos.forEach(b => {
         select.innerHTML += `<option value="${b}">${b}</option>`;
         listaUl.innerHTML += `
-          <li class="list-group-item d-flex justify-content-between align-items-center py-1">
-            ${b}
-            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="eliminarBarbero('${b}')">✕</button>
+          <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-0">
+            <span class="fw-bold">${b}</span>
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarBarbero('${b}')">Borrar</button>
           </li>
         `;
       });
     }
 
-    // --- OPCIONES Y GESTIÓN DE BARBEROS ---
     function agregarBarbero() {
       const input = document.getElementById('nuevoBarberoNombre');
       const nombre = input.value.trim();
-      if (nombre && !listaBarberos.includes(nombre)) {
-        listaBarberos.push(nombre);
-        input.value = '';
-        guardarLocal();
-        actualizarSelectoresBarberos();
-        actualizarInterfazDiaria();
-        sincronizarConNube();
+      if (nombre) {
+        const nombreFormateado = nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase();
+        if (!listaBarberos.includes(nombreFormateado)) {
+          listaBarberos.push(nombreFormateado);
+          input.value = '';
+          guardarLocal();
+          actualizarSelectoresBarberos();
+          actualizarInterfazDiaria();
+          sincronizarConNube();
+        }
       }
     }
 
     function eliminarBarbero(nombre) {
       if (listaBarberos.length <= 1) {
-        alert('Debe haber al menos un barbero.');
+        alert('Debe quedar al menos un peluquero.');
         return;
       }
-      listaBarberos = listaBarberos.filter(b => b !== nombre);
+      listaBarberos = listaBarberos.filter(b => b.toLowerCase() !== nombre.toLowerCase());
       guardarLocal();
       actualizarSelectoresBarberos();
       actualizarInterfazDiaria();
@@ -460,12 +505,12 @@
       localStorage.setItem('BIN_ID', BIN_ID);
       localStorage.setItem('MASTER_KEY', MASTER_KEY);
 
-      alert('Configuración guardada.');
+      alert('Credenciales guardadas.');
       sincronizarConNube();
     }
 
     function forzarLimpiezaLocal() {
-      if (confirm('¿Quieres resetear la lista de hoy a $0? Esto corregirá los desfases.')) {
+      if (confirm('¿Querés limpiar los cortes de hoy?')) {
         sincronizarConNube(true);
       }
     }
