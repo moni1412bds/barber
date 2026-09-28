@@ -251,7 +251,7 @@
 
 <div class="container">
     <div class="header">
-        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#10b981;">v1.0.5</span></h1>
+        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#f59e0b;">v1.0.8</span></h1>
         <div class="date-badge" id="fechaHoy">--/--/----</div>
     </div>
 
@@ -399,8 +399,7 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN DE VERSIÓN V1.0.5
-    var APP_VERSION = "1.0.7";
+    var APP_VERSION = "1.0.8";
     var URL_ACTUALIZACION = "https://raw.githubusercontent.com/moni1412bds/barber/main/index.html";
 
     var BIN_ID = '6aad8afeffd5d160531714d0';
@@ -413,10 +412,12 @@
 
     var coloresBarberos = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
-    document.getElementById('lblVersion').innerText = `v${APP_VERSION}`;
-    document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString('es-AR', {
-        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-    });
+    function inicializarFechasYTextos() {
+        document.getElementById('lblVersion').innerText = `v${APP_VERSION}`;
+        document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString('es-AR', {
+            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
+        });
+    }
 
     function cargarLocal() {
         var localBarberos = localStorage.getItem('barber_lista');
@@ -448,7 +449,6 @@
         });
     }
 
-    // BUSCAR ACTUALIZACIÓN Y ESCRIBIR EN DISCO HARDWARE CON RECARGA DE RUTA
     async function buscarActualizacion(manual) {
         if (!manual) manual = false;
         
@@ -470,33 +470,15 @@
             var versionRemota = matchVersion ? matchVersion[1] : null;
 
             if (versionRemota && versionRemota !== APP_VERSION) {
-                if (confirm(`🚀 ¡Hay una nueva versión disponible (v${versionRemota})!\n¿Querés actualizar el ejecutable local? TUS DATOS NO SE PERDERÁN.`)) {
-                    
+                if (confirm(`🚀 ¡Hay una nueva versión disponible (v${versionRemota})!\n\n¿Deseas descargar e instalar la actualización?`)) {
                     guardarLocal();
+                    
+                    var blob = new Blob([htmlNuevo], { type: 'text/html' });
+                    var a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'index.html';
+                    a.click();
 
-                    // DETECCIÓN Y ESCRITURA EN DISCO LOCAL DENTRO DE NW.JS
-                    if (typeof require !== 'undefined') {
-                        try {
-                            const fs = require('fs');
-                            const path = require('path');
-                            
-                            // Obtiene la ruta física del ejecutable o carpeta donde corre el .exe
-                            const rutaIndex = path.join(process.cwd(), 'index.html');
-                            
-                            // Sobrescribe físicamente el archivo en el disco
-                            fs.writeFileSync(rutaIndex, htmlNuevo, 'utf8');
-                            
-                            alert("✅ ¡Archivo local actualizado con éxito! La app se reiniciará con la nueva versión.");
-                            
-                            // Redirige directamente al archivo index físico con timestamp para evitar caché
-                            window.location.href = rutaIndex + '?v=' + new Date().getTime();
-                            return;
-                        } catch (errNode) {
-                            alert("Error al escribir en el disco: " + errNode.message);
-                        }
-                    }
-
-                    // Respaldo navegador web común
                     document.open();
                     document.write(htmlNuevo);
                     document.close();
@@ -511,10 +493,11 @@
 
     async function sincronizarConNube(forzarLimpiezaLocal) {
         if (!forzarLimpiezaLocal) forzarLimpiezaLocal = false;
-        document.getElementById('statusText').innerText = 'Sincronizando...';
+        var elemStatus = document.getElementById('statusText');
+        if (elemStatus) elemStatus.innerText = 'Sincronizando...';
         
         if (!navigator.onLine) {
-            document.getElementById('statusText').innerText = 'Sin Conexión (Modo Offline) 📡❌';
+            if (elemStatus) elemStatus.innerText = 'Sin Conexión (Modo Offline) 📡❌';
             return;
         }
 
@@ -568,13 +551,13 @@
             if (document.getElementById('tab-historial').classList.contains('active')) {
                 renderHistorial();
             }
-            document.getElementById('statusText').innerText = 'Sincronizado ✅';
+            if (elemStatus) elemStatus.innerText = 'Sincronizado ✅';
 
             buscarActualizacion(false);
 
         } catch (err) {
             console.error(err);
-            document.getElementById('statusText').innerText = 'Guardado solo Local (Offline) ⚠️';
+            if (elemStatus) elemStatus.innerText = 'Guardado solo Local (Offline) ⚠️';
         }
     }
 
@@ -747,13 +730,19 @@
             }
         });
 
+        // Parseo manual sin desfasaje por zona horaria UTC
         var partesFecha = fechaIngresada.split('-');
-        var fechaFormateada = `${partesFecha[2]}/${partesFecha[1]}/${partesFecha[0]}`;
+        var anio = parseInt(partesFecha[0], 10);
+        var mes = parseInt(partesFecha[1], 10) - 1;
+        var dia = parseInt(partesFecha[2], 10);
+
+        var fechaFormateada = `${dia.toString().padStart(2, '0')}/${(mes + 1).toString().padStart(2, '0')}/${anio}`;
+        var timestampLocal = new Date(anio, mes, dia, 12, 0, 0).getTime();
 
         var cierre = {
             fecha: fechaIngresada,
             fechaTexto: fechaFormateada,
-            timestamp: new Date(fechaIngresada + 'T12:00:00').getTime(),
+            timestamp: timestampLocal,
             cortesTotales: registrosHoy.length,
             recaudacionTotal: efTotal + trTotal,
             efectivoTotal: efTotal,
@@ -818,10 +807,21 @@
         var fechaHastaVal = document.getElementById('fechaHasta').value;
 
         var filtrados = historialCierres.filter(function(c) {
+            var pC = c.fecha.split('-');
+            var cFecha = new Date(parseInt(pC[0]), parseInt(pC[1]) - 1, parseInt(pC[2]), 0, 0, 0).getTime();
+
             if (filtro === 'personalizado' && (fechaDesdeVal || fechaHastaVal)) {
-                var cFecha = new Date(c.fecha + 'T00:00:00').getTime();
-                var fDesde = fechaDesdeVal ? new Date(fechaDesdeVal + 'T00:00:00').getTime() : 0;
-                var fHasta = fechaHastaVal ? new Date(fechaHastaVal + 'T23:59:59').getTime() : Infinity;
+                var fDesde = 0;
+                var fHasta = Infinity;
+
+                if (fechaDesdeVal) {
+                    var pD = fechaDesdeVal.split('-');
+                    fDesde = new Date(parseInt(pD[0]), parseInt(pD[1]) - 1, parseInt(pD[2]), 0, 0, 0).getTime();
+                }
+                if (fechaHastaVal) {
+                    var pH = fechaHastaVal.split('-');
+                    fHasta = new Date(parseInt(pH[0]), parseInt(pH[1]) - 1, parseInt(pH[2]), 23, 59, 59).getTime();
+                }
 
                 return cFecha >= fDesde && cFecha <= fHasta;
             }
@@ -830,7 +830,7 @@
             else if (filtro === 'mensual') limiteMs = 30 * 24 * 60 * 60 * 1000;
             else if (filtro === 'todo') return true;
 
-            return (ahora - c.timestamp) <= limiteMs;
+            return (ahora - cFecha) <= limiteMs;
         });
 
         filtrados.sort(function(a, b) { return b.timestamp - a.timestamp; });
@@ -999,6 +999,13 @@
         reader.readAsText(file);
     }
 
+    document.addEventListener('DOMContentLoaded', function() {
+        inicializarFechasYTextos();
+        cargarLocal();
+        actualizarInterfazDiaria();
+        sincronizarConNube();
+    });
+
     window.addEventListener('beforeunload', function(e) {
         var hayPendientes = registrosHoy.some(function(r) { return !r.sincronizado; });
         if (hayPendientes) {
@@ -1010,11 +1017,6 @@
     window.addEventListener('online', function() {
         sincronizarConNube();
     });
-
-    // INICIALIZACIÓN
-    cargarLocal();
-    actualizarInterfazDiaria();
-    sincronizarConNube();
 </script>
 </body>
 </html>
