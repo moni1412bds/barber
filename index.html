@@ -1,1022 +1,474 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Control de Barbería - Profesional</title>
-    <style>
-        :root {
-            --primary: #1e293b;
-            --accent-card: #0ea5e9;
-            --bg: #f1f5f9;
-        }
-
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-
-        body {
-            background-color: var(--bg);
-            margin: 0;
-            padding: 10px;
-            color: #334155;
-        }
-
-        .container {
-            max-width: 1050px;
-            margin: 0 auto;
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
-
-        .header {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
-        }
-
-        @media (min-width: 600px) {
-            .header { flex-direction: row; justify-content: space-between; align-items: center; }
-            body { padding: 15px; }
-            .container { padding: 20px; }
-        }
-
-        h1 { margin: 0; color: var(--primary); font-size: 1.4rem; }
-        .date-badge { background: #e2e8f0; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; align-self: flex-start; }
-
-        .tabs { display: flex; gap: 8px; margin-bottom: 15px; }
-
-        .tab-btn {
-            flex: 1;
-            padding: 10px 8px;
-            border: none;
-            background: #e2e8f0;
-            cursor: pointer;
-            border-radius: 8px;
-            font-weight: bold;
-            color: #64748b;
-            transition: 0.2s;
-            font-size: 0.85rem;
-            text-align: center;
-        }
-
-        .tab-btn.active { background: var(--primary); color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .card {
-            padding: 12px;
-            border-radius: 10px;
-            color: white;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            background-color: #3b82f6;
-        }
-
-        .card-total { background-color: #1e293b; }
-        .card h3 { margin: 0 0 6px 0; font-size: 1rem; text-transform: capitalize; }
-        .card .amount { font-size: 1.3rem; font-weight: bold; }
-        .card .subtext { font-size: 0.78rem; opacity: 0.95; margin-top: 4px; line-height: 1.3; }
-
-        .input-section {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .input-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
-        label { font-weight: 600; font-size: 0.8rem; }
-
-        select, input, button {
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            font-size: 0.9rem;
-            width: 100%;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #fff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            cursor: pointer;
-            min-width: 150px;
-            user-select: none;
-        }
-
-        .checkbox-group input { width: auto; cursor: pointer; }
-        .checkbox-group label { cursor: pointer; font-size: 0.85rem; margin: 0; }
-
-        button.btn-primary { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
-        button.btn-close-day { background-color: #ef4444; color: white; border: none; cursor: pointer; font-weight: bold; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; width: auto; }
-        button.btn-sync { background-color: #0284c7; color: white; border: none; cursor: pointer; font-weight: bold; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; width: auto; }
-        
-        button.btn-update { background-color: #10b981; color: white; border: none; cursor: pointer; font-weight: bold; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; width: auto; }
-        button.btn-config { background-color: #475569; color: white; border: none; cursor: pointer; font-weight: bold; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; width: auto; }
-
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-top: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-        }
-
-        table { width: 100%; border-collapse: collapse; min-width: 550px; }
-        th, td { border-bottom: 1px solid #e2e8f0; padding: 8px 10px; text-align: center; font-size: 0.85rem; white-space: nowrap; }
-        th { background-color: #f8fafc; font-weight: bold; }
-
-        .action-buttons {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .btn-delete { 
-            background: #ef4444; 
-            color: white; 
-            border: none; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 0.75rem;
-            line-height: 1;
-        }
-
-        .btn-edit { 
-            background: #f59e0b; 
-            color: white; 
-            border: none; 
-            padding: 4px 8px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 0.75rem;
-            line-height: 1;
-        }
-
-        .status-bar {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .badge-pago { padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .badge-efectivo { background: #dcfce7; color: #166534; }
-        .badge-transf { background: #e0f2fe; color: #075985; }
-
-        .balance-box { background: #1e293b; color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .balance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 10px; }
-        .balance-item { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; text-align: center; }
-        .balance-item h4 { margin: 0 0 4px 0; font-size: 0.8rem; opacity: 0.8; font-weight: normal; text-transform: capitalize; }
-        .balance-item .val { font-size: 1.1rem; font-weight: bold; }
-
-        .modal-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 999;
-        }
-        
-        .modal-content { 
-            position: relative; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            width: 90%; 
-            max-width: 480px; 
-        }
-        
-        .btn-modal-close-x {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: #ef4444;
-            color: white;
-            border: none;
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            line-height: 1;
-            transition: background 0.2s ease;
-        }
-
-        .btn-modal-close-x:hover {
-            background: #dc2626;
-        }
-
-        .barber-item-edit { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-
-        @media print {
-            .status-bar, .tabs, .input-section, .btn-close-day, .btn-delete, .btn-edit, .btn-config, .btn-sync, .btn-update { display: none !important; }
-            .container { box-shadow: none; padding: 0; }
-            body { background: white; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Barbería</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding-bottom: 80px;
+    }
+    .card-custom {
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .status-bar {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .nav-tabs .nav-link.active {
+      font-weight: bold;
+      border-bottom: 3px solid #0d6efd;
+    }
+  </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#f59e0b;">v1.0.8</span></h1>
-        <div class="date-badge" id="fechaHoy">--/--/----</div>
-    </div>
+  <!-- Barra de Estado -->
+  <div class="bg-dark text-white text-center py-1 status-bar">
+    Estado: <span id="statusText">Iniciando...</span>
+  </div>
 
-    <!-- BARRA DE ESTADO Y HERRAMIENTAS -->
-    <div class="status-bar" id="statusBar">
-        <div style="font-size: 0.85rem;">
-            ☁️ <strong id="statusText">Cargando datos...</strong>
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button class="btn-update" onclick="buscarActualizacion(true)">🚀 Actualizar App</button>
-            <button class="btn-config" onclick="abrirModalBarberos()">⚙️ Opciones</button>
-            <button class="btn-sync" onclick="sincronizarConNube()">🔄 Sincronizar</button>
-        </div>
-    </div>
+  <div class="container mt-3">
+    <!-- Pestañas de Navegación -->
+    <ul class="nav nav-tabs mb-3" id="mainTabs" role="tablist">
+      <li class="nav-item">
+        <button class="nav-link active" id="tab-registro-link" data-bs-toggle="tab" data-bs-target="#tab-registro" type="button">Cortes de Hoy</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="tab-historial-link" data-bs-toggle="tab" data-bs-target="#tab-historial" type="button" onclick="renderHistorial()">Historial de Cierres</button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" id="tab-opciones-link" data-bs-toggle="tab" data-bs-target="#tab-opciones" type="button">⚙️ Opciones</button>
+      </li>
+    </ul>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('diario')">📆 Registro Diario</button>
-        <button class="tab-btn" onclick="switchTab('historial')">📊 Historial Cierres</button>
-    </div>
-
-    <!-- PESTAÑA 1: REGISTRO DIARIO -->
-    <div id="tab-diario" class="tab-content active">
-        <div class="cards-grid" id="cardsBarberosGrid"></div>
-
-        <div class="input-section">
-            <div class="input-group">
-                <label for="peluquero">Peluquero</label>
-                <select id="peluquero"></select>
-            </div>
-            <div class="input-group">
-                <label for="monto">Monto ($)</label>
-                <input type="number" id="monto" value="10000" step="1000">
-            </div>
-            <div class="checkbox-group" onclick="document.getElementById('esTransferencia').click(); event.stopPropagation();">
-                <input type="checkbox" id="esTransferencia" onclick="event.stopPropagation();">
-                <label for="esTransferencia">💳 Transferencia</label>
-            </div>
-            <div class="input-group">
-                <button class="btn-primary" id="btnAgregar" onclick="agregarOEditarCorte()">+ Registrar Corte</button>
-            </div>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; flex-wrap:wrap; gap:10px;">
-            <h3 style="margin:0; font-size:1.1rem;">Cortes del Día</h3>
-            <button class="btn-close-day" onclick="cierreDeCaja()">🔒 Realizar Cierre Diario</button>
-        </div>
-
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Hora</th>
-                        <th>Peluquero</th>
-                        <th>Medio</th>
-                        <th>Monto Corte</th>
-                        <th>Pago Barbero</th>
-                        <th>Estado Sync</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaRegistrosDiarios"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- PESTAÑA 2: HISTORIAL Y RESUMEN -->
-    <div id="tab-historial" class="tab-content">
-        <div class="input-section" style="margin-bottom: 10px;">
-            <div class="input-group">
-                <label>Filtro Rápido</label>
-                <select id="filtroTiempo" onchange="limpiarFechasManuales(); renderHistorial();">
-                    <option value="semanal">Últimos 7 Días (Semanal)</option>
-                    <option value="mensual">Último Mes (30 Días)</option>
-                    <option value="todo">Histórico Completo</option>
-                    <option value="personalizado">Rango Personalizado 📅</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="fechaDesde">Desde</label>
-                <input type="date" id="fechaDesde" onchange="activarPersonalizado()">
-            </div>
-            <div class="input-group">
-                <label for="fechaHasta">Hasta</label>
-                <input type="date" id="fechaHasta" onchange="activarPersonalizado()">
-            </div>
-            <div class="input-group" style="min-width: 100px;">
-                <label>&nbsp;</label>
-                <button class="btn-primary" style="background:#0284c7;" onclick="renderHistorial()">🔍 Calcular</button>
-            </div>
-            <div class="input-group" style="min-width: 100px;">
-                <label>&nbsp;</label>
-                <button class="btn-primary" style="background:#475569;" onclick="window.print()">🖨️ Imprimir</button>
-            </div>
-        </div>
-
-        <div class="balance-box">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0; font-size:1.05rem;">📊 Balance del Período</h3>
-                <span id="txtRangoFechas" style="font-size:0.8rem; opacity:0.8;">--</span>
-            </div>
-            <div class="balance-grid" id="balanceGrid"></div>
-        </div>
-
-        <div class="table-responsive">
-            <table>
-                <thead id="headHistorial"></thead>
-                <tbody id="tablaHistorial"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL CONFIGURACIÓN -->
-<div class="modal-bg" id="modalBarberos">
-    <div class="modal-content">
-        <button class="btn-modal-close-x" onclick="cerrarModalBarberos()" title="Cerrar">✕</button>
-
-        <h3 style="margin-top:0;">⚙️ Configurar Barberos</h3>
-        <p style="font-size:0.85rem; color:#64748b;">Añade, renombra o elimina miembros del equipo:</p>
+    <div class="tab-content" id="mainTabsContent">
+      
+      <!-- PESTAÑA: REGISTRO Y CORTES DEL DÍA -->
+      <div class="tab-pane fade show active" id="tab-registro" role="tabpanel">
         
-        <div id="listaBarberosEdit" style="max-height:180px; overflow-y:auto; margin-bottom:15px;"></div>
-
-        <div style="display:flex; gap:6px; margin-bottom:15px;">
-            <input type="text" id="nuevoBarberoNombre" placeholder="Nombre nuevo barbero...">
-            <button class="btn-primary" style="width:auto;" onclick="agregarBarberoNuevo()">+ Añadir</button>
+        <!-- Tarjetas Resumen Barberos -->
+        <div id="barberosCards" class="row g-2 mb-3">
+          <!-- Se generan dinámicamente -->
         </div>
 
-        <hr style="border:0; border-top:1px solid #e2e8f0; margin:15px 0;">
-
-        <h4 style="margin:0 0 8px 0; font-size:0.9rem;">💾 Copia de Seguridad y Mantenimiento</h4>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn-primary" style="background:#0284c7; font-size:0.8rem;" onclick="exportarBackup()">📥 Descargar Backup</button>
-            <button class="btn-primary" style="background:#475569; font-size:0.8rem;" onclick="document.getElementById('inputImport').click()">📤 Cargar Backup</button>
-            <input type="file" id="inputImport" accept=".json" style="display:none;" onchange="importarBackup(event)">
+        <!-- Formulario para Registrar Corte -->
+        <div class="card card-custom p-3 mb-3">
+          <div class="row g-2 align-items-center">
+            <div class="col-6 col-md-3">
+              <label class="form-label mb-1 fw-bold">Peluquero</label>
+              <select id="selectBarbero" class="form-select"></select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label mb-1 fw-bold">Monto ($)</label>
+              <input type="number" id="montoCorte" class="form-control" value="10000" step="500">
+            </div>
+            <div class="col-6 col-md-3 d-flex align-items-end">
+              <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" id="checkTransferencia">
+                <label class="form-check-label fw-bold" for="checkTransferencia">
+                  💳 Transferencia
+                </label>
+              </div>
+            </div>
+            <div class="col-6 col-md-3 d-flex align-items-end">
+              <button class="btn btn-dark w-100 fw-bold" onclick="registrarCorte()">+ Registrar Corte</button>
+            </div>
+          </div>
         </div>
 
-        <div style="margin-top:15px; padding-top:10px; border-top:1px dashed #ef4444;">
-            <button class="btn-primary" style="background:#dc2626; font-size:0.8rem; width:100%;" onclick="forzarLimpiezaDiaria()">🚨 Forzar Limpieza Diaria ($0)</button>
+        <!-- Encabezado y Botón Cierre -->
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h5 class="m-0 fw-bold">Cortes del Día</h5>
+          <button class="btn btn-danger btn-sm fw-bold" onclick="realizarCierreDiario()">🔒 Realizar Cierre Diario</button>
         </div>
 
-        <div style="text-align:right; margin-top:20px;">
-            <button onclick="cerrarModalBarberos()" class="btn-primary" style="width:auto; background:#1e293b;">Guardar y Cerrar</button>
+        <!-- Tabla de Cortes del Día -->
+        <div class="card card-custom p-2 table-responsive">
+          <table class="table table-hover align-middle mb-0 text-center">
+            <thead class="table-light">
+              <tr>
+                <th>Hora</th>
+                <th>Peluquero</th>
+                <th>Medio</th>
+                <th>Monto Corte</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCortesBody">
+              <!-- Filas dinámicas -->
+            </tbody>
+          </table>
         </div>
+      </div>
+
+      <!-- PESTAÑA: HISTORIAL -->
+      <div class="tab-pane fade" id="tab-historial" role="tabpanel">
+        <h5 class="fw-bold mb-3">Historial de Cierres Diarios</h5>
+        <div id="historialContainer">
+          <!-- Tarjetas/Listas dinámicas de cierres -->
+        </div>
+      </div>
+
+      <!-- PESTAÑA: OPCIONES -->
+      <div class="tab-pane fade" id="tab-opciones" role="tabpanel">
+        <div class="card card-custom p-3 mb-3">
+          <h6 class="fw-bold">Gestión de Barberos</h6>
+          <div class="input-group mb-2">
+            <input type="text" id="nuevoBarberoNombre" class="form-control" placeholder="Nombre del Barbero">
+            <button class="btn btn-primary" onclick="agregarBarbero()">Agregar</button>
+          </div>
+          <ul id="listaBarberosUl" class="list-group"></ul>
+        </div>
+
+        <div class="card card-custom p-3 mb-3">
+          <h6 class="fw-bold">Credenciales JSONBin</h6>
+          <div class="mb-2">
+            <label class="form-label mb-1">BIN ID</label>
+            <input type="text" id="inputBinId" class="form-control">
+          </div>
+          <div class="mb-2">
+            <label class="form-label mb-1">Master Key</label>
+            <input type="password" id="inputMasterKey" class="form-control">
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="guardarConfiguracion()">Guardar Configuración</button>
+        </div>
+
+        <div class="card card-custom p-3 border-danger">
+          <h6 class="fw-bold text-danger">Zona de Riesgo</h6>
+          <p class="text-muted small">Usar esta opción solo si la app se trabó o muestra registros antiguos desfasados.</p>
+          <button class="btn btn-outline-danger w-100 fw-bold" onclick="forzarLimpiezaLocal()">🚨 Forzar Limpieza Diaria ($0)</button>
+        </div>
+      </div>
+
     </div>
-</div>
+  </div>
 
-<script>
-    var APP_VERSION = "1.0.8";
-    var URL_ACTUALIZACION = "https://raw.githubusercontent.com/moni1412bds/barber/main/index.html";
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // --- VARIABLES DE ESTADO Y CONFIGURACIÓN ---
+    let BIN_ID = localStorage.getItem('BIN_ID') || '';
+    let MASTER_KEY = localStorage.getItem('MASTER_KEY') || '';
 
-    var BIN_ID = '6aad8afeffd5d160531714d0';
-    var MASTER_KEY = '$2a$10$FCxMjtRnqqHPzGwm9sQLP.IwkeMvcgCSPwHRUd3yn4WR8Tc8LUJSa';
+    let listaBarberos = JSON.parse(localStorage.getItem('listaBarberos')) || ['Riki', 'Lucas', 'Willy'];
+    let registrosHoy = JSON.parse(localStorage.getItem('registrosHoy')) || [];
+    let historialCierres = JSON.parse(localStorage.getItem('historialCierres')) || [];
 
-    var listaBarberos = ['riki', 'lucas', 'willy'];
-    var registrosHoy = [];
-    var historialCierres = [];
-    var indiceEditando = -1;
+    const coloresBarberos = ['#ffc107', '#6f42c1', '#0d6efd', '#198754', '#fd7e14', '#20c997'];
 
-    var coloresBarberos = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+    // --- INICIALIZACIÓN ---
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('inputBinId').value = BIN_ID;
+      document.getElementById('inputMasterKey').value = MASTER_KEY;
+      
+      actualizarSelectoresBarberos();
+      actualizarInterfazDiaria();
+      
+      if (BIN_ID && MASTER_KEY) {
+        sincronizarConNube();
+      } else {
+        document.getElementById('statusText').innerText = 'Modo Local (Sin JSONBin Configurado)';
+      }
+    });
 
-    function inicializarFechasYTextos() {
-        document.getElementById('lblVersion').innerText = `v${APP_VERSION}`;
-        document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString('es-AR', {
-            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-        });
-    }
-
-    function cargarLocal() {
-        var localBarberos = localStorage.getItem('barber_lista');
-        var localReg = localStorage.getItem('barber_registrosHoy');
-        var localHist = localStorage.getItem('barber_historialCierres');
-        
-        if (localBarberos) listaBarberos = JSON.parse(localBarberos);
-        if (localReg) registrosHoy = JSON.parse(localReg);
-        if (localHist) historialCierres = JSON.parse(localHist);
-
-        actualizarSelectoresBarberos();
-    }
-
+    // --- ALMACENAMIENTO LOCAL ---
     function guardarLocal() {
-        localStorage.setItem('barber_lista', JSON.stringify(listaBarberos));
-        localStorage.setItem('barber_registrosHoy', JSON.stringify(registrosHoy));
-        localStorage.setItem('barber_historialCierres', JSON.stringify(historialCierres));
+      localStorage.setItem('registrosHoy', JSON.stringify(registrosHoy));
+      localStorage.setItem('historialCierres', JSON.stringify(historialCierres));
+      localStorage.setItem('listaBarberos', JSON.stringify(listaBarberos));
     }
 
-    function actualizarSelectoresBarberos() {
-        var select = document.getElementById('peluquero');
-        if (!select) return;
-        select.innerHTML = '';
-        listaBarberos.forEach(function(b) {
-            var opt = document.createElement('option');
-            opt.value = b.toLowerCase();
-            opt.textContent = b.charAt(0).toUpperCase() + b.slice(1);
-            select.appendChild(opt);
+    // --- SINCRONIZACIÓN CON JSONBIN (LÓGICA CORREGIDA) ---
+    async function sincronizarConNube(forzarLimpiezaLocal = false) {
+      const elemStatus = document.getElementById('statusText');
+      if (elemStatus) elemStatus.innerText = 'Sincronizando...';
+
+      if (!BIN_ID || !MASTER_KEY) {
+        if (elemStatus) elemStatus.innerText = 'Modo Local (Sin credenciales de nube)';
+        return;
+      }
+
+      if (!navigator.onLine) {
+        if (elemStatus) elemStatus.innerText = 'Sin Conexión (Modo Offline) 📡❌';
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+          headers: { 'X-Master-Key': MASTER_KEY }
         });
-    }
-
-    async function buscarActualizacion(manual) {
-        if (!manual) manual = false;
         
-        if (!navigator.onLine) {
-            if (manual) alert("No hay conexión a Internet para buscar actualizaciones.");
-            return;
-        }
+        if (!res.ok) throw new Error('Error al conectar con JSONBin');
 
-        try {
-            var res = await fetch(URL_ACTUALIZACION + '?nocache=' + new Date().getTime());
-            if (!res.ok) throw new Error("No disponible");
-            
-            var htmlNuevo = await res.text();
+        const data = await res.json();
+        let nubeHoy = data.record.registrosHoy || [];
+        let nubeHistorial = data.record.historialCierres || [];
+        let nubeBarberos = data.record.listaBarberos || listaBarberos;
 
-            var matchVersion = htmlNuevo.match(/var\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
-            if (!matchVersion) {
-                matchVersion = htmlNuevo.match(/const\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
-            }
-            var versionRemota = matchVersion ? matchVersion[1] : null;
-
-            if (versionRemota && versionRemota !== APP_VERSION) {
-                if (confirm(`🚀 ¡Hay una nueva versión disponible (v${versionRemota})!\n\n¿Deseas descargar e instalar la actualización?`)) {
-                    guardarLocal();
-                    
-                    var blob = new Blob([htmlNuevo], { type: 'text/html' });
-                    var a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = 'index.html';
-                    a.click();
-
-                    document.open();
-                    document.write(htmlNuevo);
-                    document.close();
-                }
-            } else if (manual) {
-                alert("Ya tenés la última versión instalada (v" + APP_VERSION + ").");
-            }
-        } catch (err) {
-            if (manual) alert("No se pudo conectar con el servidor de actualizaciones.");
-        }
-    }
-
-    async function sincronizarConNube(forzarLimpiezaLocal) {
-        if (!forzarLimpiezaLocal) forzarLimpiezaLocal = false;
-        var elemStatus = document.getElementById('statusText');
-        if (elemStatus) elemStatus.innerText = 'Sincronizando...';
-        
-        if (!navigator.onLine) {
-            if (elemStatus) elemStatus.innerText = 'Sin Conexión (Modo Offline) 📡❌';
-            return;
-        }
-
-        try {
-            var res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                headers: { 'X-Master-Key': MASTER_KEY }
-            });
-            var data = await res.json();
-
-            var nubeHoy = data.record.registrosHoy || [];
-            var nubeHistorial = data.record.historialCierres || [];
-            var nubeBarberos = data.record.listaBarberos || listaBarberos;
-
-            if (forzarLimpiezaLocal) {
-                nubeHoy = [];
-                registrosHoy = [];
-            } else {
-                registrosHoy.forEach(function(r) { r.sincronizado = true; });
-                if (registrosHoy.length >= nubeHoy.length) {
-                    nubeHoy = registrosHoy;
-                } else {
-                    registrosHoy = nubeHoy;
-                }
-            }
-
-            if (historialCierres.length > 0 || nubeHistorial.length === 0) {
-                nubeHistorial = historialCierres;
-            } else {
-                historialCierres = nubeHistorial;
-            }
-
-            listaBarberos = Array.from(new Set([...listaBarberos, ...nubeBarberos]));
-
-            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': MASTER_KEY
-                },
-                body: JSON.stringify({ 
-                    registrosHoy: nubeHoy, 
-                    historialCierres: nubeHistorial,
-                    listaBarberos: listaBarberos
-                })
-            });
-
-            guardarLocal();
-            actualizarSelectoresBarberos();
-            actualizarInterfazDiaria();
-            
-            if (document.getElementById('tab-historial').classList.contains('active')) {
-                renderHistorial();
-            }
-            if (elemStatus) elemStatus.innerText = 'Sincronizado ✅';
-
-            buscarActualizacion(false);
-
-        } catch (err) {
-            console.error(err);
-            if (elemStatus) elemStatus.innerText = 'Guardado solo Local (Offline) ⚠️';
-        }
-    }
-
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
-        
-        if (tabName === 'diario') {
-            document.querySelectorAll('.tab-btn')[0].classList.add('active');
-            document.getElementById('tab-diario').classList.add('active');
-            actualizarInterfazDiaria();
+        if (forzarLimpiezaLocal) {
+          nubeHoy = [];
+          registrosHoy = [];
         } else {
-            document.querySelectorAll('.tab-btn')[1].classList.add('active');
-            document.getElementById('tab-historial').classList.add('active');
-            renderHistorial();
-        }
-    }
-
-    async function agregarOEditarCorte() {
-        var peluquero = document.getElementById('peluquero').value;
-        var monto = parseFloat(document.getElementById('monto').value);
-        var esTransferencia = document.getElementById('esTransferencia').checked;
-
-        if (isNaN(monto) || monto <= 0) {
-            alert('Ingrese un monto válido');
-            return;
+          // LÓGICA CORREGIDA: Si en la nube hay menos cortes o está vacía (por cierre previo), 
+          // prevalece siempre el estado de la nube para no restaurar registros antiguos.
+          registrosHoy = nubeHoy;
         }
 
-        if (indiceEditando >= 0) {
-            registrosHoy[indiceEditando].peluquero = peluquero;
-            registrosHoy[indiceEditando].monto = monto;
-            registrosHoy[indiceEditando].metodo = esTransferencia ? 'transferencia' : 'efectivo';
-            registrosHoy[indiceEditando].sincronizado = false;
-
-            indiceEditando = -1;
-            document.getElementById('btnAgregar').innerText = '+ Registrar Corte';
-            document.getElementById('btnAgregar').style.background = 'var(--primary)';
-        } else {
-            var hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-            registrosHoy.push({ 
-                peluquero: peluquero, 
-                monto: monto, 
-                hora: hora, 
-                metodo: esTransferencia ? 'transferencia' : 'efectivo',
-                sincronizado: false 
-            });
+        if (nubeHistorial.length >= historialCierres.length) {
+          historialCierres = nubeHistorial;
         }
 
-        document.getElementById('esTransferencia').checked = false;
+        listaBarberos = Array.from(new Set([...listaBarberos, ...nubeBarberos]));
+
+        // Guardar estado unificado en JSONBin
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': MASTER_KEY
+          },
+          body: JSON.stringify({
+            registrosHoy: registrosHoy,
+            historialCierres: historialCierres,
+            listaBarberos: listaBarberos
+          })
+        });
 
         guardarLocal();
+        actualizarSelectoresBarberos();
         actualizarInterfazDiaria();
-        await sincronizarConNube();
+        
+        if (document.getElementById('tab-historial').classList.contains('active')) {
+          renderHistorial();
+        }
+
+        if (elemStatus) elemStatus.innerText = 'Sincronizado ✅ (v1.1.0)';
+
+      } catch (err) {
+        console.error(err);
+        if (elemStatus) elemStatus.innerText = 'Guardado solo Local (Offline / Error de Red) ⚠️';
+      }
     }
 
-    function editarCorte(idx) {
-        var reg = registrosHoy[idx];
-        document.getElementById('peluquero').value = reg.peluquero;
-        document.getElementById('monto').value = reg.monto;
-        document.getElementById('esTransferencia').checked = (reg.metodo === 'transferencia');
+    // --- ACCIONES DE CORTES ---
+    function registrarCorte() {
+      const barbero = document.getElementById('selectBarbero').value;
+      const monto = parseFloat(document.getElementById('montoCorte').value) || 0;
+      const esTransferencia = document.getElementById('checkTransferencia').checked;
 
-        indiceEditando = idx;
-        document.getElementById('btnAgregar').innerText = '✏️ Guardar Cambios';
-        document.getElementById('btnAgregar').style.background = '#f59e0b';
+      if (!barbero || monto <= 0) {
+        alert('Por favor ingrese un monto válido.');
+        return;
+      }
+
+      const nuevoCorte = {
+        id: Date.now(),
+        hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+        barbero: barbero,
+        medio: esTransferencia ? 'Transf.' : 'Efec.',
+        monto: monto
+      };
+
+      registrosHoy.push(nuevoCorte);
+      document.getElementById('checkTransferencia').checked = false;
+
+      guardarLocal();
+      actualizarInterfazDiaria();
+      sincronizarConNube();
     }
 
-    async function eliminarCorte(idx) {
-        registrosHoy.splice(idx, 1);
+    function eliminarCorte(id) {
+      if (confirm('¿Seguro que querés eliminar este corte?')) {
+        registrosHoy = registrosHoy.filter(corte => corte.id !== id);
         guardarLocal();
         actualizarInterfazDiaria();
-        await sincronizarConNube();
+        sincronizarConNube();
+      }
     }
 
-    async function eliminarCierre(timestamp) {
-        if (confirm('¿Eliminar este cierre del historial?')) {
-            historialCierres = historialCierres.filter(function(c) { return c.timestamp !== timestamp; });
-            guardarLocal();
-            renderHistorial();
-            await sincronizarConNube();
-        }
-    }
+    function realizarCierreDiario() {
+      if (registrosHoy.length === 0) {
+        alert('No hay cortes registrados hoy.');
+        return;
+      }
 
-    function actualizarInterfazDiaria() {
-        var grid = document.getElementById('cardsBarberosGrid');
-        if (!grid) return;
-        grid.innerHTML = '';
-
-        var totalCortes = registrosHoy.length;
-        var totalRecaudado = registrosHoy.reduce(function(acc, curr) { return acc + curr.monto; }, 0);
-        var totalEf = registrosHoy.filter(function(r) { return (r.metodo || 'efectivo') === 'efectivo'; }).reduce(function(acc, curr) { return acc + curr.monto; }, 0);
-        var totalTr = registrosHoy.filter(function(r) { return r.metodo === 'transferencia'; }).reduce(function(acc, curr) { return acc + curr.monto; }, 0);
-        var ticketPromedio = totalCortes > 0 ? Math.round(totalRecaudado / totalCortes) : 0;
-
-        grid.innerHTML += `
-            <div class="card card-total">
-                <h3>Total Hoy</h3>
-                <div class="amount">$${totalRecaudado.toLocaleString()}</div>
-                <div class="subtext">${totalCortes} cortes | Prom: $${ticketPromedio.toLocaleString()}<br>Ef: $${totalEf.toLocaleString()} | Tr: $${totalTr.toLocaleString()}</div>
-            </div>
-        `;
-
-        listaBarberos.forEach(function(barbero, idx) {
-            var bKey = barbero.toLowerCase();
-            var cortesB = registrosHoy.filter(function(r) { return r.peluquero === bKey; });
-            var efB = cortesB.filter(function(r) { return (r.metodo || 'efectivo') === 'efectivo'; }).reduce(function(a, b) { return a + b.monto; }, 0);
-            var trB = cortesB.filter(function(r) { return r.metodo === 'transferencia'; }).reduce(function(a, b) { return a + b.monto; }, 0);
-            var totB = efB + trB;
-            var color = coloresBarberos[idx % coloresBarberos.length];
-
-            grid.innerHTML += `
-                <div class="card" style="background-color: ${color}">
-                    <h3>${barbero}</h3>
-                    <div class="amount">$${(totB * 0.5).toLocaleString()}</div>
-                    <div class="subtext">${cortesB.length} cortes<br>Ef: $${(efB * 0.5).toLocaleString()} | Tr: $${(trB * 0.5).toLocaleString()}</div>
-                </div>
-            `;
-        });
-
-        var tbody = document.getElementById('tablaRegistrosDiarios');
-        tbody.innerHTML = '';
-
-        registrosHoy.forEach(function(reg, idx) {
-            var metodo = reg.metodo || 'efectivo';
-            var iconSync = reg.sincronizado ? '☁️ Sincronizado' : '📱 Local (Pendiente)';
-
-            var tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${reg.hora}</strong></td>
-                <td style="text-transform: capitalize;">${reg.peluquero}</td>
-                <td><span class="badge-pago ${metodo === 'transferencia' ? 'badge-transf' : 'badge-efectivo'}">${metodo === 'transferencia' ? '💳 Transf.' : '💵 Efec.'}</span></td>
-                <td>$${reg.monto.toLocaleString()}</td>
-                <td>$${(reg.monto * 0.5).toLocaleString()}</td>
-                <td><span style="font-size:0.8rem;">${iconSync}</span></td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="btn-edit" onclick="editarCorte(${idx})">✏️</button>
-                        <button class="btn-delete" onclick="eliminarCorte(${idx})">✕</button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    async function cierreDeCaja() {
-        if (registrosHoy.length === 0) {
-            alert('No hay registros cargados para realizar el cierre.');
-            return;
-        }
-
-        var fechaSugerida = new Date().toISOString().split('T')[0];
-        var fechaIngresada = prompt("Confirma la FECHA para este cierre (AAAA-MM-DD):", fechaSugerida);
-
-        if (!fechaIngresada) return;
-
-        var detalleBarberos = {};
-        listaBarberos.forEach(function(b) { detalleBarberos[b.toLowerCase()] = 0; });
-
-        var efTotal = 0;
-        var trTotal = 0;
-
-        registrosHoy.forEach(function(r) {
-            var m = r.metodo || 'efectivo';
-            if (m === 'transferencia') trTotal += r.monto;
-            else efTotal += r.monto;
-
-            var bKey = r.peluquero.toLowerCase();
-            if (detalleBarberos[bKey] !== undefined) {
-                detalleBarberos[bKey] += (r.monto * 0.5);
-            }
-        });
-
-        // Parseo manual sin desfasaje por zona horaria UTC
-        var partesFecha = fechaIngresada.split('-');
-        var anio = parseInt(partesFecha[0], 10);
-        var mes = parseInt(partesFecha[1], 10) - 1;
-        var dia = parseInt(partesFecha[2], 10);
-
-        var fechaFormateada = `${dia.toString().padStart(2, '0')}/${(mes + 1).toString().padStart(2, '0')}/${anio}`;
-        var timestampLocal = new Date(anio, mes, dia, 12, 0, 0).getTime();
-
-        var cierre = {
-            fecha: fechaIngresada,
-            fechaTexto: fechaFormateada,
-            timestamp: timestampLocal,
-            cortesTotales: registrosHoy.length,
-            recaudacionTotal: efTotal + trTotal,
-            efectivoTotal: efTotal,
-            transferenciaTotal: trTotal,
-            pagosBarberos: detalleBarberos
+      if (confirm('¿Confirmás realizar el Cierre Diario? Se guardará en el historial y se limpiará el registro de hoy.')) {
+        const fechaHoy = new Date().toLocaleDateString('es-AR');
+        
+        const resumenCierre = {
+          fecha: fechaHoy,
+          cierreHora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+          cortes: [...registrosHoy]
         };
 
-        historialCierres.push(cierre);
+        historialCierres.unshift(resumenCierre);
         registrosHoy = [];
-        
+
         guardarLocal();
         actualizarInterfazDiaria();
-        
-        await sincronizarConNube(true);
-        alert('✅ Cierre de caja realizado con éxito y caja diaria limpia.');
+        sincronizarConNube(true);
+        alert('Cierre realizado con éxito.');
+      }
     }
 
-    async function forzarLimpiezaDiaria() {
-        if (confirm('🚨 ¿Estás seguro de que deseas forzar el borrado de la caja de hoy? Dejará los cortes diarios en $0 tanto localmente como en la nube.')) {
-            registrosHoy = [];
-            guardarLocal();
-            actualizarInterfazDiaria();
-            await sincronizarConNube(true);
-            cerrarModalBarberos();
-            alert('✅ Caja diaria reseteada a $0 de forma exitosa.');
-        }
-    }
+    // --- RENDERING E INTERFAZ ---
+    function actualizarInterfazDiaria() {
+      // 1. Tarjetas Resumen Barberos
+      const barberosCardsContainer = document.getElementById('barberosCards');
+      barberosCardsContainer.innerHTML = '';
 
-    function activarPersonalizado() {
-        document.getElementById('filtroTiempo').value = 'personalizado';
-    }
+      listaBarberos.forEach((barbero, idx) => {
+        const cortesBarbero = registrosHoy.filter(c => c.barbero === barbero);
+        const cantCortes = cortesBarbero.length;
+        const totalEfec = cortesBarbero.filter(c => c.medio === 'Efec.').reduce((sum, c) => sum + c.monto, 0);
+        const totalTransf = cortesBarbero.filter(c => c.medio === 'Transf.').reduce((sum, c) => sum + c.monto, 0);
+        const totalGeneral = totalEfec + totalTransf;
 
-    function limpiarFechasManuales() {
-        document.getElementById('fechaDesde').value = '';
-        document.getElementById('fechaHasta').value = '';
+        const colorBg = coloresBarberos[idx % coloresBarberos.length];
+
+        const cardHTML = `
+          <div class="col-6 col-md-4">
+            <div class="card p-2 text-white shadow-sm text-center" style="background-color: ${colorBg}; border-radius: 10px;">
+              <h6 class="mb-0 fw-bold">${barbero}</h6>
+              <h4 class="fw-bold my-1">$${totalGeneral.toLocaleString()}</h4>
+              <small class="d-block">${cantCortes} cortes</small>
+              <small class="d-block style="font-size: 0.75rem;">Ef: $${totalEfec.toLocaleString()} | Tr: $${totalTransf.toLocaleString()}</small>
+            </div>
+          </div>
+        `;
+        barberosCardsContainer.innerHTML += cardHTML;
+      });
+
+      // 2. Tabla Cortes
+      const tablaBody = document.getElementById('tablaCortesBody');
+      tablaBody.innerHTML = '';
+
+      if (registrosHoy.length === 0) {
+        tablaBody.innerHTML = '<tr><td colspan="5" class="text-muted">No hay cortes registrados hoy</td></tr>';
+        return;
+      }
+
+      registrosHoy.forEach(c => {
+        const badgeClass = c.medio === 'Transf.' ? 'bg-primary-subtle text-primary border border-primary' : 'bg-success-subtle text-success border border-success';
+        const icono = c.medio === 'Transf.' ? '💳' : '💵';
+
+        const row = `
+          <tr>
+            <td>${c.hora}</td>
+            <td class="fw-bold">${c.barbero}</td>
+            <td><span class="badge ${badgeClass}">${icono} ${c.medio}</span></td>
+            <td class="fw-bold">$${c.monto.toLocaleString()}</td>
+            <td>
+              <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="eliminarCorte(${c.id})">✕</button>
+            </td>
+          </tr>
+        `;
+        tablaBody.innerHTML += row;
+      });
     }
 
     function renderHistorial() {
-        var filtro = document.getElementById('filtroTiempo').value;
-        var tbody = document.getElementById('tablaHistorial');
-        var head = document.getElementById('headHistorial');
-        tbody.innerHTML = '';
+      const container = document.getElementById('historialContainer');
+      container.innerHTML = '';
 
-        var headHTML = `
-            <tr>
-                <th>Fecha Cierre</th>
-                <th>Cortes</th>
-                <th>Total General</th>
-                <th>Efectivo</th>
-                <th>Transferencias</th>
+      if (historialCierres.length === 0) {
+        container.innerHTML = '<p class="text-muted">No hay cierres guardados en el historial.</p>';
+        return;
+      }
+
+      historialCierres.forEach((cierre, index) => {
+        const totalDia = cierre.cortes.reduce((sum, c) => sum + c.monto, 0);
+        
+        let detalleHTML = '';
+        cierre.cortes.forEach(c => {
+          detalleHTML += `
+            <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+              <small>${c.hora} - <strong>${c.barbero}</strong> (${c.medio})</small>
+              <small class="fw-bold">$${c.monto.toLocaleString()}</small>
+            </li>
+          `;
+        });
+
+        const card = `
+          <div class="card card-custom p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold m-0">📅 ${cierre.fecha} (Cierre: ${cierre.cierreHora})</h6>
+              <span class="badge bg-success fs-6">$${totalDia.toLocaleString()}</span>
+            </div>
+            <ul class="list-group list-group-flush mb-0">
+              ${detalleHTML}
+            </ul>
+          </div>
         `;
-        listaBarberos.forEach(function(b) {
-            headHTML += `<th style="text-transform:capitalize;">${b}</th>`;
-        });
-        headHTML += `<th>Acción</th></tr>`;
-        head.innerHTML = headHTML;
-
-        var ahora = new Date().getTime();
-        var limiteMs = 0;
-
-        var fechaDesdeVal = document.getElementById('fechaDesde').value;
-        var fechaHastaVal = document.getElementById('fechaHasta').value;
-
-        var filtrados = historialCierres.filter(function(c) {
-            var pC = c.fecha.split('-');
-            var cFecha = new Date(parseInt(pC[0]), parseInt(pC[1]) - 1, parseInt(pC[2]), 0, 0, 0).getTime();
-
-            if (filtro === 'personalizado' && (fechaDesdeVal || fechaHastaVal)) {
-                var fDesde = 0;
-                var fHasta = Infinity;
-
-                if (fechaDesdeVal) {
-                    var pD = fechaDesdeVal.split('-');
-                    fDesde = new Date(parseInt(pD[0]), parseInt(pD[1]) - 1, parseInt(pD[2]), 0, 0, 0).getTime();
-                }
-                if (fechaHastaVal) {
-                    var pH = fechaHastaVal.split('-');
-                    fHasta = new Date(parseInt(pH[0]), parseInt(pH[1]) - 1, parseInt(pH[2]), 23, 59, 59).getTime();
-                }
-
-                return cFecha >= fDesde && cFecha <= fHasta;
-            }
-
-            if (filtro === 'semanal') limiteMs = 7 * 24 * 60 * 60 * 1000;
-            else if (filtro === 'mensual') limiteMs = 30 * 24 * 60 * 60 * 1000;
-            else if (filtro === 'todo') return true;
-
-            return (ahora - cFecha) <= limiteMs;
-        });
-
-        filtrados.sort(function(a, b) { return b.timestamp - a.timestamp; });
-
-        var balRecaudado = 0;
-        var balCortes = 0;
-        var balEf = 0;
-        var balTr = 0;
-        var balBarberos = {};
-        listaBarberos.forEach(function(b) { balBarberos[b.toLowerCase()] = 0; });
-
-        filtrados.forEach(function(c) {
-            balRecaudado += (c.recaudacionTotal || 0);
-            balCortes += (c.cortesTotales || 0);
-            balEf += (c.efectivoTotal || 0);
-            balTr += (c.transferenciaTotal || 0);
-
-            var rowBarberosHTML = '';
-            listaBarberos.forEach(function(b) {
-                var bKey = b.toLowerCase();
-                var val = 0;
-                if (c.pagosBarberos && c.pagosBarberos[bKey] !== undefined) {
-                    val = c.pagosBarberos[bKey];
-                } else if (c[`${bKey}50`] !== undefined) {
-                    val = c[`${bKey}50`];
-                }
-                balBarberos[bKey] += val;
-                rowBarberosHTML += `<td>$${val.toLocaleString()}</td>`;
-            });
-
-            var tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${c.fechaTexto}</strong></td>
-                <td>${c.cortesTotales}</td>
-                <td><strong>$${c.recaudacionTotal.toLocaleString()}</strong></td>
-                <td>$${(c.efectivoTotal || 0).toLocaleString()}</td>
-                <td>$${(c.transferenciaTotal || 0).toLocaleString()}</td>
-                ${rowBarberosHTML}
-                <td><button class="btn-delete" onclick="eliminarCierre(${c.timestamp})">✕ Borrar</button></td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        var balGrid = document.getElementById('balanceGrid');
-        balGrid.innerHTML = `
-            <div class="balance-item">
-                <h4>Total Recaudado</h4>
-                <div class="val" style="color:#38bdf8;">$${balRecaudado.toLocaleString()}</div>
-            </div>
-            <div class="balance-item">
-                <h4>Cortes Totales</h4>
-                <div class="val">${balCortes}</div>
-            </div>
-            <div class="balance-item">
-                <h4>Efectivo</h4>
-                <div class="val" style="color:#4ade80;">$${balEf.toLocaleString()}</div>
-            </div>
-            <div class="balance-item">
-                <h4>Transferencia</h4>
-                <div class="val" style="color:#a78bfa;">$${balTr.toLocaleString()}</div>
-            </div>
-        `;
-
-        listaBarberos.forEach(function(b) {
-            var bKey = b.toLowerCase();
-            balGrid.innerHTML += `
-                <div class="balance-item">
-                    <h4>${b}</h4>
-                    <div class="val">$${(balBarberos[bKey] || 0).toLocaleString()}</div>
-                </div>
-            `;
-        });
-
-        if (filtro === 'personalizado' && (fechaDesdeVal || fechaHastaVal)) {
-            document.getElementById('txtRangoFechas').innerText = `${fechaDesdeVal || 'Inicio'} a ${fechaHastaVal || 'Hoy'}`;
-        } else if (filtro === 'semanal') {
-            document.getElementById('txtRangoFechas').innerText = 'Últimos 7 Días';
-        } else if (filtro === 'mensual') {
-            document.getElementById('txtRangoFechas').innerText = 'Últimos 30 Días';
-        } else {
-            document.getElementById('txtRangoFechas').innerText = 'Histórico Completo';
-        }
+        container.innerHTML += card;
+      });
     }
 
-    function abrirModalBarberos() {
-        renderListaModalBarberos();
-        document.getElementById('modalBarberos').style.display = 'flex';
+    function actualizarSelectoresBarberos() {
+      const select = document.getElementById('selectBarbero');
+      const listaUl = document.getElementById('listaBarberosUl');
+      
+      select.innerHTML = '';
+      listaUl.innerHTML = '';
+
+      listaBarberos.forEach(b => {
+        select.innerHTML += `<option value="${b}">${b}</option>`;
+        listaUl.innerHTML += `
+          <li class="list-group-item d-flex justify-content-between align-items-center py-1">
+            ${b}
+            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="eliminarBarbero('${b}')">✕</button>
+          </li>
+        `;
+      });
     }
 
-    function cerrarModalBarberos() {
-        document.getElementById('modalBarberos').style.display = 'none';
+    // --- OPCIONES Y GESTIÓN DE BARBEROS ---
+    function agregarBarbero() {
+      const input = document.getElementById('nuevoBarberoNombre');
+      const nombre = input.value.trim();
+      if (nombre && !listaBarberos.includes(nombre)) {
+        listaBarberos.push(nombre);
+        input.value = '';
         guardarLocal();
         actualizarSelectoresBarberos();
         actualizarInterfazDiaria();
         sincronizarConNube();
+      }
     }
 
-    function renderListaModalBarberos() {
-        var contenedor = document.getElementById('listaBarberosEdit');
-        contenedor.innerHTML = '';
-
-        listaBarberos.forEach(function(b, idx) {
-            contenedor.innerHTML += `
-                <div class="barber-item-edit">
-                    <input type="text" value="${b}" onchange="renombrarBarbero(${idx}, this.value)">
-                    <button class="btn-delete" style="width:auto;" onclick="eliminarBarbero(${idx})">✕</button>
-                </div>
-            `;
-        });
+    function eliminarBarbero(nombre) {
+      if (listaBarberos.length <= 1) {
+        alert('Debe haber al menos un barbero.');
+        return;
+      }
+      listaBarberos = listaBarberos.filter(b => b !== nombre);
+      guardarLocal();
+      actualizarSelectoresBarberos();
+      actualizarInterfazDiaria();
+      sincronizarConNube();
     }
 
-    function agregarBarberoNuevo() {
-        var val = document.getElementById('nuevoBarberoNombre').value.trim();
-        if (val) {
-            listaBarberos.push(val);
-            document.getElementById('nuevoBarberoNombre').value = '';
-            renderListaModalBarberos();
-        }
+    function guardarConfiguracion() {
+      BIN_ID = document.getElementById('inputBinId').value.trim();
+      MASTER_KEY = document.getElementById('inputMasterKey').value.trim();
+
+      localStorage.setItem('BIN_ID', BIN_ID);
+      localStorage.setItem('MASTER_KEY', MASTER_KEY);
+
+      alert('Configuración guardada.');
+      sincronizarConNube();
     }
 
-    function renombrarBarbero(idx, nuevoNombre) {
-        if (nuevoNombre.trim()) listaBarberos[idx] = nuevoNombre.trim();
+    function forzarLimpiezaLocal() {
+      if (confirm('¿Quieres resetear la lista de hoy a $0? Esto corregirá los desfases.')) {
+        sincronizarConNube(true);
+      }
     }
-
-    function eliminarBarbero(idx) {
-        if (listaBarberos.length <= 1) {
-            alert('Debe existir al menos un barbero.');
-            return;
-        }
-        if (confirm(`¿Eliminar a ${listaBarberos[idx]}?`)) {
-            listaBarberos.splice(idx, 1);
-            renderListaModalBarberos();
-        }
-    }
-
-    function exportarBackup() {
-        var data = { listaBarberos: listaBarberos, registrosHoy: registrosHoy, historialCierres: historialCierres };
-        var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `backup_barberia_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-    }
-
-    function importarBackup(e) {
-        var file = e.target.files[0];
-        if (!file) return;
-
-        var reader = new FileReader();
-        reader.onload = function(evt) {
-            try {
-                var parsed = JSON.parse(evt.target.result);
-                if (parsed.listaBarberos) listaBarberos = parsed.listaBarberos;
-                if (parsed.registrosHoy) registrosHoy = parsed.registrosHoy;
-                if (parsed.historialCierres) historialCierres = parsed.historialCierres;
-
-                guardarLocal();
-                actualizarSelectoresBarberos();
-                actualizarInterfazDiaria();
-                sincronizarConNube();
-                alert('✅ Backup cargado con éxito.');
-            } catch(err) {
-                alert('❌ Archivo de copia de seguridad no válido.');
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        inicializarFechasYTextos();
-        cargarLocal();
-        actualizarInterfazDiaria();
-        sincronizarConNube();
-    });
-
-    window.addEventListener('beforeunload', function(e) {
-        var hayPendientes = registrosHoy.some(function(r) { return !r.sincronizado; });
-        if (hayPendientes) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
-
-    window.addEventListener('online', function() {
-        sincronizarConNube();
-    });
-</script>
+  </script>
 </body>
 </html>
