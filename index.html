@@ -361,11 +361,11 @@
     </div>
 </div>
 
-<!-- FIREBASE SDKs -->
+<!-- FIREBASE SDKs CON SOPORTE OFFLINE -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { 
-        getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setDoc, getDocs, writeBatch 
+        getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, setDoc, getDocs, writeBatch, enableIndexedDbPersistence 
     } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
     // 🔴 CREDENCIALES DE FIREBASE
@@ -380,6 +380,23 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // 🌐 ACTIVAR MODO OFFLINE / PERSISTENCIA LOCAL
+    enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code == 'failed-precondition') {
+            console.log('Persistencia falló: Múltiples pestañas abiertas a la vez.');
+        } else if (err.code == 'unimplemented') {
+            console.log('El navegador no soporta almacenamiento offline.');
+        }
+    });
+
+    // Detectar estado de la red para avisar visualmente
+    window.addEventListener('online', () => {
+        document.getElementById('statusText').innerText = "Conectado a Firebase ✅";
+    });
+    window.addEventListener('offline', () => {
+        document.getElementById('statusText').innerText = "⚠️ Sin Internet (Modo Offline - Guardando Localmente)";
+    });
 
     // Variables de Estado
     window.listaBarberos = ['riki', 'lucas', 'willy'];
@@ -412,7 +429,12 @@
         snapshot.forEach((doc) => {
             window.registrosHoy.push({ id: doc.id, ...doc.data() });
         });
-        document.getElementById('statusText').innerText = "Conectado a Firebase ✅";
+        
+        if (navigator.onLine) {
+            document.getElementById('statusText').innerText = "Conectado a Firebase ✅";
+        } else {
+            document.getElementById('statusText').innerText = "⚠️ Sin Internet (Guardando Localmente)";
+        }
         actualizarInterfazDiaria();
     });
 
