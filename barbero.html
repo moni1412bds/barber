@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Barbería - App Peluqueros</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+
+    <style>
+        :root { var(--primary): #1e293b; --bg: #f1f5f9; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f1f5f9; margin: 0; padding: 12px; color: #334155; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; }
+        h1 { margin: 0; color: #1e293b; font-size: 1.2rem; }
+        .user-badge { background: #e2e8f0; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 0.8rem; color: #334155; }
+
+        .input-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        label { font-weight: 600; font-size: 0.85rem; }
+        select, input, button { padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; width: 100%; }
+
+        .checkbox-group { display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer; user-select: none; }
+        .checkbox-group input { width: auto; height: 18px; width: 18px; }
+
+        button.btn-primary { background-color: #1e293b; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        button.btn-logout { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
+
+        .status-bar { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+
+        /* Login Screen */
+        .login-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .login-box { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 360px; text-align: center; }
+
+        .summary-card { background: #3b82f6; color: white; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 15px; }
+        .summary-card h3 { margin: 0; font-size: 0.9rem; opacity: 0.9; }
+        .summary-card .total { font-size: 1.8rem; font-weight: bold; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<!-- PANTALLA DE LOGIN -->
+<div class="login-bg" id="loginScreen">
+    <div class="login-box">
+        <h2 style="margin-top:0; color:#1e293b;">✂️ Acceso Peluqueros</h2>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom: 15px;">Ingresá con tu cuenta para registrar cortes:</p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <input type="email" id="loginEmail" placeholder="Correo electrónico...">
+            <input type="password" id="loginPassword" placeholder="Contraseña...">
+            <button class="btn-primary" onclick="iniciarSesion()">Ingresar</button>
+            <p id="loginError" style="color:#ef4444; font-size:0.8rem; margin:0; display:none;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- CONTENIDO PRINCIPAL -->
+<div class="container" id="mainContent" style="display: none;">
+    <div class="header">
+        <h1>✂️ Mi Panel de Cortes</h1>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="user-badge" id="nombreUsuario">Peluquero</span>
+            <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <span id="statusText">Conectando a Firebase...</span>
+    </div>
+
+    <!-- TARJETA TOTAL DEL BARBERO LOGUEADO -->
+    <div class="summary-card" id="tarjetaResumen">
+        <h3>Mis Ganancias de Hoy (50%)</h3>
+        <div class="total" id="txtTotalGanancia">$0</div>
+        <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 4px;" id="txtCortesCount">0 cortes registrados</div>
+    </div>
+
+    <!-- FORMULARIO CORTES -->
+    <div class="input-section">
+        <div class="input-group">
+            <label for="peluquero">Peluquero Que Registra</label>
+            <select id="peluquero"></select>
+        </div>
+        <div class="input-group">
+            <label for="monto">Monto del Corte ($)</label>
+            <input type="number" id="monto" value="10000" step="1000">
+        </div>
+        <div class="checkbox-group" onclick="document.getElementById('esTransferencia').click(); event.stopPropagation();">
+            <input type="checkbox" id="esTransferencia" onclick="event.stopPropagation();">
+            <label for="esTransferencia">💳 Transferencia / MercadoPago</label>
+        </div>
+        <button class="btn-primary" style="background:#10b981; margin-top:5px;" onclick="agregarCorte()">+ REGISTRAR CORTE</button>
+    </div>
+</div>
+
+<!-- FIREBASE SDKs -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDr2WkcTIkK65JAnbY1F9kRmesUgFYezW4",
+        authDomain: "barberiacontrol-c7731.firebaseapp.com",
+        projectId: "barberiacontrol-c7731",
+        storageBucket: "barberiacontrol-c7731.firebasestorage.app",
+        messagingSenderId: "411795215845",
+        appId: "1:411795215845:web:9b6a58289e8b4614f8cb0c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    enableIndexedDbPersistence(db).catch(() => {});
+
+    let usuarioActual = null;
+    window.listaBarberos = [];
+    window.registrosHoy = [];
+
+    // --- AUTENTICACIÓN ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            usuarioActual = user;
+            const emailNombre = user.email.split('@')[0];
+            document.getElementById('nombreUsuario').innerText = emailNombre.toUpperCase();
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            iniciarEscuchadores();
+        } else {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+        }
+    });
+
+    window.iniciarSesion = async function() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const pass = document.getElementById('loginPassword').value.trim();
+        const errTxt = document.getElementById('loginError');
+        
+        try {
+            errTxt.style.display = 'none';
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (err) {
+            errTxt.innerText = "Error: Usuario o clave incorrecta";
+            errTxt.style.display = 'block';
+        }
+    };
+
+    window.cerrarSesion = function() {
+        signOut(auth);
+    };
+
+    // --- BASE DE DATOS Y LÓGICA ---
+    function iniciarEscuchadores() {
+        // Escuchar Barberos
+        onSnapshot(doc(db, "configuracion", "barberos"), (docSnap) => {
+            if (docSnap.exists() && docSnap.data().lista) {
+                window.listaBarberos = docSnap.data().lista;
+            }
+            actualizarSelectoresBarberos();
+        });
+
+        // Escuchar Cortes de Hoy
+        onSnapshot(collection(db, "cortesHoy"), (snapshot) => {
+            window.registrosHoy = [];
+            snapshot.forEach((doc) => {
+                window.registrosHoy.push({ id: doc.id, ...doc.data() });
+            });
+            actualizarResumenBarbero();
+        });
+    }
+
+    function actualizarSelectoresBarberos() {
+        const select = document.getElementById('peluquero');
+        select.innerHTML = '';
+        const emailNombre = usuarioActual ? usuarioActual.email.split('@')[0].toLowerCase() : '';
+
+        window.listaBarberos.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.toLowerCase();
+            opt.textContent = b.charAt(0).toUpperCase() + b.slice(1);
+            if (b.toLowerCase() === emailNombre) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    function actualizarResumenBarbero() {
+        if (!usuarioActual) return;
+        const barberoKey = document.getElementById('peluquero').value || usuarioActual.email.split('@')[0].toLowerCase();
+        
+        const misCortes = window.registrosHoy.filter(r => r.tipo !== 'gasto' && r.peluquero && r.peluquero.toLowerCase() === barberoKey);
+        const totalBruto = misCortes.reduce((acc, curr) => acc + curr.monto, 0);
+        const miGanancia = totalBruto * 0.5;
+
+        document.getElementById('txtTotalGanancia').innerText = `$${miGanancia.toLocaleString()}`;
+        document.getElementById('txtCortesCount').innerText = `${misCortes.length} corte(s) registrado(s) hoy`;
+        
+        document.getElementById('statusText').innerText = navigator.onLine ? "Conectado ✅" : "⚠️ Offline (Guardando Localmente)";
+    }
+
+    document.getElementById('peluquero').addEventListener('change', actualizarResumenBarbero);
+
+    window.agregarCorte = async function() {
+        const peluquero = document.getElementById('peluquero').value;
+        const monto = parseFloat(document.getElementById('monto').value);
+        const esTransferencia = document.getElementById('esTransferencia').checked;
+
+        if (isNaN(monto) || monto <= 0) {
+            alert('Ingrese un monto válido');
+            return;
+        }
+
+        const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        await addDoc(collection(db, "cortesHoy"), {
+            tipo: 'corte',
+            peluquero: peluquero,
+            monto: monto,
+            hora: hora,
+            metodo: esTransferencia ? 'transferencia' : 'efectivo',
+            timestamp: Date.now()
+        });
+
+        document.getElementById('esTransferencia').checked = false;
+        alert('✅ Corte registrado con éxito');
+    };
+</script>
+</body>
+</html>
