@@ -231,11 +231,6 @@
             justify-content: center;
             padding: 0;
             line-height: 1;
-            transition: background 0.2s ease;
-        }
-
-        .btn-modal-close-x:hover {
-            background: #dc2626;
         }
 
         .barber-item-edit { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
@@ -251,17 +246,17 @@
 
 <div class="container">
     <div class="header">
-        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#f59e0b;">v1.0.9</span></h1>
+        <h1>✂️ Barbería - Control de Caja <span id="lblVersion" style="font-size:0.75rem; color:#f59e0b;">v1.1.0</span></h1>
         <div class="date-badge" id="fechaHoy">--/--/----</div>
     </div>
 
-    <!-- BARRA DE ESTADO Y HERRAMIENTAS -->
+    <!-- BARRA DE ESTADO -->
     <div class="status-bar" id="statusBar">
         <div style="font-size: 0.85rem;">
             ☁️ <strong id="statusText">Cargando datos...</strong>
         </div>
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button class="btn-update" onclick="buscarActualizacion(true)">🚀 Actualizar App</button>
+            <button class="btn-update" id="btnActualizarApp" onclick="buscarActualizacion(true)">🚀 Actualizar App</button>
             <button class="btn-config" onclick="abrirModalBarberos()">⚙️ Opciones</button>
             <button class="btn-sync" onclick="sincronizarConNube()">🔄 Sincronizar</button>
         </div>
@@ -368,7 +363,6 @@
 <div class="modal-bg" id="modalBarberos">
     <div class="modal-content">
         <button class="btn-modal-close-x" onclick="cerrarModalBarberos()" title="Cerrar">✕</button>
-
         <h3 style="margin-top:0;">⚙️ Configurar Barberos</h3>
         <p style="font-size:0.85rem; color:#64748b;">Añade, renombra o elimina miembros del equipo:</p>
         
@@ -381,7 +375,7 @@
 
         <hr style="border:0; border-top:1px solid #e2e8f0; margin:15px 0;">
 
-        <h4 style="margin:0 0 8px 0; font-size:0.9rem;">💾 Copia de Seguridad y Mantenimiento</h4>
+        <h4 style="margin:0 0 8px 0; font-size:0.9rem;">💾 Copia de Seguridad</h4>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn-primary" style="background:#0284c7; font-size:0.8rem;" onclick="exportarBackup()">📥 Descargar Backup</button>
             <button class="btn-primary" style="background:#475569; font-size:0.8rem;" onclick="document.getElementById('inputImport').click()">📤 Cargar Backup</button>
@@ -399,7 +393,7 @@
 </div>
 
 <script>
-    var APP_VERSION = "1.0.9";
+    var APP_VERSION = "1.1.0";
     var URL_ACTUALIZACION = "https://raw.githubusercontent.com/moni1412bds/barber/main/index.html";
 
     var BIN_ID = '6aad8afeffd5d160531714d0';
@@ -409,8 +403,13 @@
     var registrosHoy = [];
     var historialCierres = [];
     var indiceEditando = -1;
+    var bloquedoPorDesactualizacion = false;
 
     var coloresBarberos = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+
+    function generarID() {
+        return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    }
 
     function sanitizarListaBarberos(arr) {
         if (!Array.isArray(arr)) return ['riki', 'lucas', 'willy'];
@@ -439,15 +438,16 @@
             var localReg = localStorage.getItem('barber_registrosHoy');
             var localHist = localStorage.getItem('barber_historialCierres');
             
-            if (localBarberos) {
-                listaBarberos = sanitizarListaBarberos(JSON.parse(localBarberos));
-            }
+            if (localBarberos) listaBarberos = sanitizarListaBarberos(JSON.parse(localBarberos));
             if (localReg) registrosHoy = JSON.parse(localReg);
             if (localHist) historialCierres = JSON.parse(localHist);
+
+            registrosHoy.forEach(function(r) {
+                if (!r.id) r.id = generarID();
+            });
         } catch(e) {
             console.error("Error al leer localStorage:", e);
         }
-
         actualizarSelectoresBarberos();
     }
 
@@ -472,44 +472,61 @@
 
     async function buscarActualizacion(manual) {
         if (!manual) manual = false;
-        
-        if (!navigator.onLine) {
-            if (manual) alert("No hay conexión a Internet para buscar actualizaciones.");
-            return;
-        }
+        if (!navigator.onLine) return;
 
         try {
             var res = await fetch(URL_ACTUALIZACION + '?nocache=' + new Date().getTime());
             if (!res.ok) throw new Error("No disponible");
             
             var htmlNuevo = await res.text();
-
-            var matchVersion = htmlNuevo.match(/var\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
-            if (!matchVersion) {
-                matchVersion = htmlNuevo.match(/const\s+APP_VERSION\s*=\s*["']([^"']+)["']/);
-            }
+            var matchVersion = htmlNuevo.match(/APP_VERSION\s*=\s*["']([^"']+)["']/);
             var versionRemota = matchVersion ? matchVersion[1] : null;
 
             if (versionRemota && versionRemota !== APP_VERSION) {
-                if (confirm(`🚀 ¡Hay una nueva versión disponible (v${versionRemota})!\n\n¿Deseas descargar e instalar la actualización?`)) {
+                bloquedoPorDesactualizacion = true;
+                document.getElementById('statusText').innerHTML = `🚨 <span style="color:#dc2626; font-weight:bold;">Versión Antigua (v${APP_VERSION}). ¡Oprima Actualizar App!</span>`;
+                
+                if (confirm(`⚠️ ¡Hay una versión más reciente (v${versionRemota})!\n\nPara evitar corromper los datos con la app desactualizada, debés actualizar ahora.\n¿Deseas descargar e instalar la versión nueva?`)) {
                     guardarLocal();
-                    
                     var blob = new Blob([htmlNuevo], { type: 'text/html' });
                     var a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
                     a.download = 'index.html';
                     a.click();
-
                     document.open();
                     document.write(htmlNuevo);
                     document.close();
                 }
+                return true;
             } else if (manual) {
                 alert("Ya tenés la última versión instalada (v" + APP_VERSION + ").");
             }
         } catch (err) {
-            if (manual) alert("No se pudo conectar con el servidor de actualizaciones.");
+            console.error("Error buscando actualización", err);
         }
+        return false;
+    }
+
+    function fusionarRegistrosUnicos(local, nube) {
+        var mapa = new Map();
+        nube.forEach(function(item) {
+            if (!item.id) item.id = generarID();
+            mapa.set(item.id, item);
+        });
+        local.forEach(function(item) {
+            if (!item.id) item.id = generarID();
+            mapa.set(item.id, item);
+        });
+        return Array.from(mapa.values());
+    }
+
+    function fusionarHistoriales(local, nube) {
+        var mapa = new Map();
+        nube.forEach(function(item) { mapa.set(item.timestamp, item); });
+        local.forEach(function(item) { mapa.set(item.timestamp, item); });
+        var res = Array.from(mapa.values());
+        res.sort(function(a,b) { return b.timestamp - a.timestamp; });
+        return res;
     }
 
     async function sincronizarConNube(forzarLimpiezaLocal) {
@@ -522,6 +539,9 @@
             return;
         }
 
+        var hayNuevaVer = await buscarActualizacion(false);
+        if (hayNuevaVer) return;
+
         try {
             var res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
                 headers: { 'X-Master-Key': MASTER_KEY }
@@ -533,37 +553,32 @@
             var nubeBarberos = data.record.listaBarberos || listaBarberos;
 
             if (forzarLimpiezaLocal) {
-                nubeHoy = [];
                 registrosHoy = [];
+                nubeHoy = [];
             } else {
+                registrosHoy = fusionarRegistrosUnicos(registrosHoy, nubeHoy);
                 registrosHoy.forEach(function(r) { r.sincronizado = true; });
-                if (registrosHoy.length >= nubeHoy.length) {
-                    nubeHoy = registrosHoy;
-                } else {
-                    registrosHoy = nubeHoy;
-                }
+                nubeHoy = registrosHoy;
             }
 
-            if (historialCierres.length > 0 || nubeHistorial.length === 0) {
-                nubeHistorial = historialCierres;
-            } else {
-                historialCierres = nubeHistorial;
-            }
-
+            historialCierres = fusionarHistoriales(historialCierres, nubeHistorial);
             listaBarberos = sanitizarListaBarberos([...listaBarberos, ...nubeBarberos]);
 
-            await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': MASTER_KEY
-                },
-                body: JSON.stringify({ 
-                    registrosHoy: nubeHoy, 
-                    historialCierres: nubeHistorial,
-                    listaBarberos: listaBarberos
-                })
-            });
+            if (!bloquedoPorDesactualizacion) {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': MASTER_KEY
+                    },
+                    body: JSON.stringify({ 
+                        version: APP_VERSION,
+                        registrosHoy: nubeHoy, 
+                        historialCierres: historialCierres,
+                        listaBarberos: listaBarberos
+                    })
+                });
+            }
 
             guardarLocal();
             actualizarSelectoresBarberos();
@@ -572,13 +587,11 @@
             if (document.getElementById('tab-historial').classList.contains('active')) {
                 renderHistorial();
             }
-            if (elemStatus) elemStatus.innerText = 'Sincronizado ✅';
-
-            buscarActualizacion(false);
+            if (elemStatus && !bloquedoPorDesactualizacion) elemStatus.innerText = 'Sincronizado ✅';
 
         } catch (err) {
             console.error(err);
-            if (elemStatus) elemStatus.innerText = 'Guardado solo Local (Offline) ⚠️';
+            if (elemStatus && !bloquedoPorDesactualizacion) elemStatus.innerText = 'Guardado solo Local (Offline) ⚠️';
         }
     }
 
@@ -598,6 +611,11 @@
     }
 
     async function agregarOEditarCorte() {
+        if (bloquedoPorDesactualizacion) {
+            alert('🚨 La app está desactualizada. Por favor pulsa "Actualizar App" arriba antes de cargar nuevos datos.');
+            return;
+        }
+
         var peluquero = document.getElementById('peluquero').value;
         var monto = parseFloat(document.getElementById('monto').value);
         var esTransferencia = document.getElementById('esTransferencia').checked;
@@ -619,6 +637,7 @@
         } else {
             var hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
             registrosHoy.push({ 
+                id: generarID(),
                 peluquero: peluquero, 
                 monto: monto, 
                 hora: hora, 
@@ -778,19 +797,18 @@
         
         guardarLocal();
         actualizarInterfazDiaria();
-        
         await sincronizarConNube(true);
-        alert('✅ Cierre de caja realizado con éxito y caja diaria limpia.');
+        alert('✅ Cierre de caja realizado con éxito.');
     }
 
     async function forzarLimpiezaDiaria() {
-        if (confirm('🚨 ¿Estás seguro de que deseas forzar el borrado de la caja de hoy? Dejará los cortes diarios en $0 tanto localmente como en la nube.')) {
+        if (confirm('🚨 ¿Deseas resetear la caja de hoy a $0 en todos los dispositivos?')) {
             registrosHoy = [];
             guardarLocal();
             actualizarInterfazDiaria();
             await sincronizarConNube(true);
             cerrarModalBarberos();
-            alert('✅ Caja diaria reseteada a $0 de forma exitosa.');
+            alert('✅ Caja diaria reseteada a $0.');
         }
     }
 
