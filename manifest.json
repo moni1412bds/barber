@@ -1,0 +1,16 @@
+{
+  "short_name": "Barbería",
+  "name": "Barbería - Control de Caja",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1005/1005767.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html?v=live",
+  "background_color": "#1e293b",
+  "theme_color": "#1e293b",
+  "display": "standalone",
+  "orientation": "portrait"
+}
