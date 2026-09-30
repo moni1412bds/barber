@@ -12,7 +12,7 @@
         h1 { margin: 0; color: #1e293b; font-size: 1.2rem; }
         .user-badge { background: #e2e8f0; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 0.8rem; color: #334155; }
 
-        /* GRILLA DE TARJETAS ESTILO IMAGEN */
+        /* GRILLA DE TARJETAS */
         .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .card-stat { padding: 12px; border-radius: 10px; color: white; text-align: center; }
         .card-total { background: #1e293b; }
@@ -39,7 +39,14 @@
         .corte-info { display: flex; flex-direction: column; gap: 2px; }
         .corte-hora { font-size: 0.75rem; color: #64748b; }
         .corte-monto { font-weight: bold; color: #0f172a; font-size: 0.95rem; }
-        .badge-pago { font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; }
+        
+        /* BOTONES DE ACCIÓN (ESTILO IMAGEN) */
+        .corte-acciones { display: flex; gap: 6px; align-items: center; }
+        .btn-action { width: 36px; height: 32px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; }
+        .btn-edit { background-color: #f59e0b; }
+        .btn-delete { background-color: #ef4444; }
+
+        .badge-pago { font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
         .badge-efectivo { background: #dcfce7; color: #15803d; }
         .badge-transferencia { background: #dbeafe; color: #1e40af; }
 
@@ -72,7 +79,7 @@
         </div>
     </div>
 
-    <!-- TARJETAS DE RESUMEN (ESTILO IMAGEN) -->
+    <!-- TARJETAS DE RESUMEN -->
     <div class="cards-grid">
         <div class="card-stat card-total">
             <h3>Total Hoy</h3>
@@ -106,7 +113,7 @@
 
     <!-- LISTA DE CORTES REGISTRADOS -->
     <div class="history-section">
-        <h2>📋 Cortes de Hoy (Tocá el pago para cambiarlo)</h2>
+        <h2>📋 Cortes de Hoy</h2>
         <div id="listaCortes">
             <p style="text-align:center; color:#94a3b8; font-size:0.85rem;">Cargando registros...</p>
         </div>
@@ -116,7 +123,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDr2WkcTIkK65JAnbY1F9kRmesUgFYezW4",
@@ -197,7 +204,7 @@
         if (!usuarioActual) return;
         const cortes = window.registrosHoy.filter(r => r.tipo !== 'gasto');
 
-        // 1. TOTAL GENERAL HOY
+        // TOTAL GENERAL HOY
         const totalGeneral = cortes.reduce((acc, c) => acc + c.monto, 0);
         const cantGeneral = cortes.length;
         const promGeneral = cantGeneral > 0 ? Math.round(totalGeneral / cantGeneral) : 0;
@@ -207,7 +214,7 @@
         document.getElementById('lblTotalHoy').innerText = `$${totalGeneral.toLocaleString()}`;
         document.getElementById('lblDetalleTotal').innerHTML = `${cantGeneral} cortes | Prom: $${promGeneral.toLocaleString()}<br>Ef: $${efGeneral.toLocaleString()} | Tr: $${trGeneral.toLocaleString()}`;
 
-        // 2. TOTAL DEL BARBERO SELECCIONADO
+        // TOTAL DEL BARBERO SELECCIONADO
         const barberoKey = document.getElementById('peluquero').value || usuarioActual.email.split('@')[0].toLowerCase();
         const misCortes = cortes.filter(c => c.peluquero && c.peluquero.toLowerCase() === barberoKey);
         
@@ -222,7 +229,7 @@
         document.getElementById('lblTotalBarbero').innerText = `$${totalBarbero.toLocaleString()}`;
         document.getElementById('lblDetalleBarbero').innerHTML = `${cantBarbero} cortes | Prom: $${promBarbero.toLocaleString()}<br>Ef: $${efBarbero.toLocaleString()} | Tr: $${trBarbero.toLocaleString()}`;
 
-        // 3. RENDERIZAR LISTA DE CORTES DEL BARBERO SELECCIONADO
+        // LISTA DE CORTES
         const contenedorLista = document.getElementById('listaCortes');
         contenedorLista.innerHTML = '';
 
@@ -231,7 +238,6 @@
             return;
         }
 
-        // Ordenar del más reciente al más antiguo
         misCortes.sort((a, b) => b.timestamp - a.timestamp);
 
         misCortes.forEach(item => {
@@ -240,33 +246,71 @@
             
             const esEf = item.metodo === 'efectivo';
             const badgeClass = esEf ? 'badge-efectivo' : 'badge-transferencia';
-            const badgeTexto = esEf ? '💵 EFECTIVO' : '💳 TRANSFERENCIA';
+            const badgeTexto = esEf ? 'EFECTIVO' : 'TRANSFERENCIA';
 
             div.innerHTML = `
                 <div class="corte-info">
-                    <span class="corte-monto">$${item.monto.toLocaleString()}</span>
+                    <div>
+                        <span class="corte-monto">$${item.monto.toLocaleString()}</span>
+                        <span class="badge-pago ${badgeClass}">${badgeTexto}</span>
+                    </div>
                     <span class="corte-hora">⏰ ${item.hora || 'S/H'}</span>
                 </div>
-                <button class="badge-pago ${badgeClass}" onclick="cambiarMetodoPago('${item.id}', '${item.metodo}')" title="Toca para cambiar pago">
-                    ${badgeTexto} ✏️
-                </button>
+                <div class="corte-acciones">
+                    <button class="btn-action btn-edit" onclick="editarRegistro('${item.id}', ${item.monto}, '${item.metodo}')" title="Editar corte">✏️</button>
+                    <button class="btn-action btn-delete" onclick="borrarRegistro('${item.id}', ${item.monto})" title="Eliminar corte">✕</button>
+                </div>
             `;
             contenedorLista.appendChild(div);
         });
     }
 
-    // CAMBIAR MÉTODO DE PAGO
-    window.cambiarMetodoPago = async function(idCorte, metodoActual) {
-        const nuevoMetodo = metodoActual === 'efectivo' ? 'transferencia' : 'efectivo';
-        const confirmar = confirm(`¿Cambiar método de pago a ${nuevoMetodo.toUpperCase()}?`);
+    // EDITAR CORTE (MONTO Y METODO DE PAGO)
+    window.editarRegistro = async function(idCorte, montoActual, metodoActual) {
+        const entradaMonto = prompt(`Monto actual: $${montoActual}\n\n• Ingresá el nuevo monto (ej: 8000)\n• O ingresá el descuento en % (ej: 20%):`, montoActual);
         
+        if (entradaMonto === null) return; // Cancelado
+
+        let nuevoMonto = 0;
+        const entradaLimpia = entradaMonto.trim();
+
+        if (entradaLimpia.endsWith('%')) {
+            const porcentaje = parseFloat(entradaLimpia.replace('%', ''));
+            if (isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+                alert('Porcentaje inválido');
+                return;
+            }
+            nuevoMonto = montoActual - (montoActual * (porcentaje / 100));
+        } else {
+            nuevoMonto = parseFloat(entradaLimpia);
+        }
+
+        if (isNaN(nuevoMonto) || nuevoMonto <= 0) {
+            alert('Monto no válido');
+            return;
+        }
+
+        const cambiarPago = confirm(`El medio de pago actual es: ${metodoActual.toUpperCase()}.\n\n¿Deseas cambiarlo a ${(metodoActual === 'efectivo' ? 'TRANSFERENCIA' : 'EFECTIVO')}?`);
+        const nuevoMetodo = cambiarPago ? (metodoActual === 'efectivo' ? 'transferencia' : 'efectivo') : metodoActual;
+
+        try {
+            await updateDoc(doc(db, "cortesHoy", idCorte), {
+                monto: Math.round(nuevoMonto),
+                metodo: nuevoMetodo
+            });
+        } catch (err) {
+            alert('Error al actualizar el registro: ' + err.message);
+        }
+    };
+
+    // ELIMINAR CORTE
+    window.borrarRegistro = async function(idCorte, monto) {
+        const confirmar = confirm(`¿Estás seguro de eliminar este corte de $${monto.toLocaleString()}?\n\nEsta acción no se puede deshacer.`);
         if (confirmar) {
             try {
-                await updateDoc(doc(db, "cortesHoy", idCorte), {
-                    metodo: nuevoMetodo
-                });
+                await deleteDoc(doc(db, "cortesHoy", idCorte));
             } catch (err) {
-                alert('Error al actualizar el pago: ' + err.message);
+                alert('Error al eliminar el corte: ' + err.message);
             }
         }
     };
