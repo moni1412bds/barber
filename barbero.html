@@ -32,6 +32,17 @@
         button.btn-primary { background-color: #10b981; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 1rem; }
         button.btn-logout { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
 
+        /* LISTA DE CORTES */
+        .history-section { margin-top: 10px; }
+        .history-section h2 { font-size: 1rem; color: #1e293b; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+        .corte-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f1f5f9; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0; }
+        .corte-info { display: flex; flex-direction: column; gap: 2px; }
+        .corte-hora { font-size: 0.75rem; color: #64748b; }
+        .corte-monto { font-weight: bold; color: #0f172a; font-size: 0.95rem; }
+        .badge-pago { font-size: 0.7rem; padding: 3px 8px; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; }
+        .badge-efectivo { background: #dcfce7; color: #15803d; }
+        .badge-transferencia { background: #dbeafe; color: #1e40af; }
+
         .login-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
         .login-box { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 360px; text-align: center; }
     </style>
@@ -92,12 +103,20 @@
         </div>
         <button class="btn-primary" onclick="agregarCorte()">+ REGISTRAR CORTE</button>
     </div>
+
+    <!-- LISTA DE CORTES REGISTRADOS -->
+    <div class="history-section">
+        <h2>📋 Cortes de Hoy (Tocá el pago para cambiarlo)</h2>
+        <div id="listaCortes">
+            <p style="text-align:center; color:#94a3b8; font-size:0.85rem;">Cargando registros...</p>
+        </div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot, doc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDr2WkcTIkK65JAnbY1F9kRmesUgFYezW4",
@@ -157,7 +176,7 @@
         onSnapshot(collection(db, "cortesHoy"), (snapshot) => {
             window.registrosHoy = [];
             snapshot.forEach((doc) => window.registrosHoy.push({ id: doc.id, ...doc.data() }));
-            actualizarTarjetas();
+            actualizarTarjetasYLista();
         });
     }
 
@@ -174,11 +193,11 @@
         });
     }
 
-    function actualizarTarjetas() {
+    function actualizarTarjetasYLista() {
         if (!usuarioActual) return;
         const cortes = window.registrosHoy.filter(r => r.tipo !== 'gasto');
 
-        // 1. CALCULAR TOTAL GENERAL HOY
+        // 1. TOTAL GENERAL HOY
         const totalGeneral = cortes.reduce((acc, c) => acc + c.monto, 0);
         const cantGeneral = cortes.length;
         const promGeneral = cantGeneral > 0 ? Math.round(totalGeneral / cantGeneral) : 0;
@@ -188,7 +207,7 @@
         document.getElementById('lblTotalHoy').innerText = `$${totalGeneral.toLocaleString()}`;
         document.getElementById('lblDetalleTotal').innerHTML = `${cantGeneral} cortes | Prom: $${promGeneral.toLocaleString()}<br>Ef: $${efGeneral.toLocaleString()} | Tr: $${trGeneral.toLocaleString()}`;
 
-        // 2. CALCULAR TOTAL DEL BARBERO SELECCIONADO
+        // 2. TOTAL DEL BARBERO SELECCIONADO
         const barberoKey = document.getElementById('peluquero').value || usuarioActual.email.split('@')[0].toLowerCase();
         const misCortes = cortes.filter(c => c.peluquero && c.peluquero.toLowerCase() === barberoKey);
         
@@ -202,9 +221,57 @@
         document.getElementById('lblNombreBarbero').innerText = nombreFormateado;
         document.getElementById('lblTotalBarbero').innerText = `$${totalBarbero.toLocaleString()}`;
         document.getElementById('lblDetalleBarbero').innerHTML = `${cantBarbero} cortes | Prom: $${promBarbero.toLocaleString()}<br>Ef: $${efBarbero.toLocaleString()} | Tr: $${trBarbero.toLocaleString()}`;
+
+        // 3. RENDERIZAR LISTA DE CORTES DEL BARBERO SELECCIONADO
+        const contenedorLista = document.getElementById('listaCortes');
+        contenedorLista.innerHTML = '';
+
+        if (misCortes.length === 0) {
+            contenedorLista.innerHTML = `<p style="text-align:center; color:#94a3b8; font-size:0.85rem;">No hay cortes registrados hoy para ${nombreFormateado}.</p>`;
+            return;
+        }
+
+        // Ordenar del más reciente al más antiguo
+        misCortes.sort((a, b) => b.timestamp - a.timestamp);
+
+        misCortes.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'corte-item';
+            
+            const esEf = item.metodo === 'efectivo';
+            const badgeClass = esEf ? 'badge-efectivo' : 'badge-transferencia';
+            const badgeTexto = esEf ? '💵 EFECTIVO' : '💳 TRANSFERENCIA';
+
+            div.innerHTML = `
+                <div class="corte-info">
+                    <span class="corte-monto">$${item.monto.toLocaleString()}</span>
+                    <span class="corte-hora">⏰ ${item.hora || 'S/H'}</span>
+                </div>
+                <button class="badge-pago ${badgeClass}" onclick="cambiarMetodoPago('${item.id}', '${item.metodo}')" title="Toca para cambiar pago">
+                    ${badgeTexto} ✏️
+                </button>
+            `;
+            contenedorLista.appendChild(div);
+        });
     }
 
-    document.getElementById('peluquero').addEventListener('change', actualizarTarjetas);
+    // CAMBIAR MÉTODO DE PAGO
+    window.cambiarMetodoPago = async function(idCorte, metodoActual) {
+        const nuevoMetodo = metodoActual === 'efectivo' ? 'transferencia' : 'efectivo';
+        const confirmar = confirm(`¿Cambiar método de pago a ${nuevoMetodo.toUpperCase()}?`);
+        
+        if (confirmar) {
+            try {
+                await updateDoc(doc(db, "cortesHoy", idCorte), {
+                    metodo: nuevoMetodo
+                });
+            } catch (err) {
+                alert('Error al actualizar el pago: ' + err.message);
+            }
+        }
+    };
+
+    document.getElementById('peluquero').addEventListener('change', actualizarTarjetasYLista);
 
     window.agregarCorte = async function() {
         const peluquero = document.getElementById('peluquero').value;
@@ -224,7 +291,6 @@
         });
 
         document.getElementById('esTransferencia').checked = false;
-        alert('✅ Corte registrado');
     };
 </script>
 </body>
