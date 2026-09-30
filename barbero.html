@@ -164,21 +164,32 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    enableIndexedDbPersistence(db).catch(() => {});
+
+    // ACTIVAR PERSISTENCIA OFFLINE EN FIRESTORE CON MANEJO DE EXCEPCIONES
+    enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code === 'failed-precondition') {
+            console.warn('Persistencia Firestore: Múltiples pestañas abiertas a la vez.');
+        } else if (err.code === 'unimplemented') {
+            console.warn('El navegador actual no soporta almacenamiento IndexedDB.');
+        }
+    });
 
     let usuarioActual = null;
-    window.listaBarberos = [];
-    window.registrosHoy = [];
+    window.listaBarberos = JSON.parse(localStorage.getItem('barberos_cache') || '[]');
+    window.registrosHoy = JSON.parse(localStorage.getItem('registros_hoy_cache') || '[]');
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
             usuarioActual = user;
+            localStorage.setItem('user_email_cache', user.email);
             const emailNombre = user.email.split('@')[0];
             document.getElementById('nombreUsuario').innerText = emailNombre.toUpperCase();
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
             iniciarEscuchadores();
         } else {
+            usuarioActual = null;
+            localStorage.removeItem('user_email_cache');
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainContent').style.display = 'none';
         }
@@ -197,12 +208,16 @@
         }
     };
 
-    window.cerrarSesion = () => signOut(auth);
+    window.cerrarSesion = () => {
+        localStorage.clear();
+        signOut(auth);
+    };
 
     function iniciarEscuchadores() {
         onSnapshot(doc(db, "configuracion", "barberos"), (docSnap) => {
             if (docSnap.exists() && docSnap.data().lista) {
                 window.listaBarberos = docSnap.data().lista;
+                localStorage.setItem('barberos_cache', JSON.stringify(window.listaBarberos));
             }
             actualizarSelectoresBarberos();
         });
@@ -210,6 +225,7 @@
         onSnapshot(collection(db, "cortesHoy"), (snapshot) => {
             window.registrosHoy = [];
             snapshot.forEach((doc) => window.registrosHoy.push({ id: doc.id, ...doc.data() }));
+            localStorage.setItem('registros_hoy_cache', JSON.stringify(window.registrosHoy));
             actualizarTarjetasYLista();
         });
     }
@@ -217,7 +233,9 @@
     function actualizarSelectoresBarberos() {
         const select = document.getElementById('peluquero');
         select.innerHTML = '';
-        const emailNombre = usuarioActual ? usuarioActual.email.split('@')[0].toLowerCase() : '';
+        const cachedEmail = localStorage.getItem('user_email_cache');
+        const emailNombre = usuarioActual ? usuarioActual.email.split('@')[0].toLowerCase() : (cachedEmail ? cachedEmail.split('@')[0].toLowerCase() : '');
+        
         window.listaBarberos.forEach(b => {
             const opt = document.createElement('option');
             opt.value = b.toLowerCase();
@@ -228,7 +246,8 @@
     }
 
     function actualizarTarjetasYLista() {
-        if (!usuarioActual) return;
+        const cachedEmail = localStorage.getItem('user_email_cache');
+        if (!usuarioActual && !cachedEmail) return;
         const cortes = window.registrosHoy.filter(r => r.tipo !== 'gasto');
 
         // 1. TOTAL GENERAL DE LA BARBERÍA (100%)
@@ -242,7 +261,8 @@
         document.getElementById('lblDetalleTotal').innerHTML = `${cantGeneral} cortes | Prom: $${promGeneral.toLocaleString()}<br>Ef: $${efGeneral.toLocaleString()} | Tr: $${trGeneral.toLocaleString()}`;
 
         // 2. TOTAL DEL BARBERO CON EL 50% APLICADO
-        const barberoKey = document.getElementById('peluquero').value || usuarioActual.email.split('@')[0].toLowerCase();
+        const currentEmail = usuarioActual ? usuarioActual.email : cachedEmail;
+        const barberoKey = document.getElementById('peluquero').value || currentEmail.split('@')[0].toLowerCase();
         const misCortes = cortes.filter(c => c.peluquero && c.peluquero.toLowerCase() === barberoKey);
         
         const recaudadoBarbero = misCortes.reduce((acc, c) => acc + c.monto, 0);
