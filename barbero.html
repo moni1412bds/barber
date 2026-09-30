@@ -178,6 +178,23 @@
     window.listaBarberos = JSON.parse(localStorage.getItem('barberos_cache') || '[]');
     window.registrosHoy = JSON.parse(localStorage.getItem('registros_hoy_cache') || '[]');
 
+    // FUNCIÓN DE AUDITORÍA/LOGS
+    async function registrarLog(accion, detalle) {
+        const usuarioEmail = auth.currentUser ? auth.currentUser.email : 'desconocido';
+        const horaFecha = new Date().toLocaleString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit' });
+        try {
+            await addDoc(collection(db, "logsActividad"), {
+                usuario: usuarioEmail,
+                accion: accion,
+                detalle: detalle,
+                fechaTexto: horaFecha,
+                timestamp: Date.now()
+            });
+        } catch (e) {
+            console.error("Error guardando log de auditoría:", e);
+        }
+    }
+
     onAuthStateChanged(auth, (user) => {
         if (user) {
             usuarioActual = user;
@@ -315,8 +332,34 @@
         });
     }
 
+    // REGISTRAR NUEVO CORTE
+    window.agregarCorte = async function() {
+        const peluquero = document.getElementById('peluquero').value;
+        const monto = parseFloat(document.getElementById('monto').value);
+        const esTransferencia = document.getElementById('esTransferencia').checked;
+        const medio = esTransferencia ? 'transferencia' : 'efectivo';
+
+        if (isNaN(monto) || monto <= 0) return alert('Ingrese un monto válido');
+
+        const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        await addDoc(collection(db, "cortesHoy"), {
+            tipo: 'corte',
+            peluquero: peluquero,
+            monto: monto,
+            hora: hora,
+            metodo: medio,
+            timestamp: Date.now()
+        });
+
+        // 📜 AUDITORÍA: Registrar la creación del corte desde la App Barberos
+        registrarLog('CREAR_CORTE', `Registró un corte de $${monto} (${medio}) asignado al peluquero: ${peluquero.toUpperCase()}`);
+
+        document.getElementById('esTransferencia').checked = false;
+    };
+
     // EDITAR CORTE (MONTO Y METODO DE PAGO)
     window.editarRegistro = async function(idCorte, montoActual, metodoActual) {
+        const regAnterior = window.registrosHoy.find(r => r.id === idCorte);
         const entradaMonto = prompt(`Monto actual: $${montoActual}\n\n• Ingresá el nuevo monto (ej: 8000)\n• O ingresá el descuento en % (ej: 20%):`, montoActual);
         
         if (entradaMonto === null) return;
@@ -344,10 +387,15 @@
         const nuevoMetodo = cambiarPago ? (metodoActual === 'efectivo' ? 'transferencia' : 'efectivo') : metodoActual;
 
         try {
-            await updateDoc(doc(db, "cortesHoy", idCorte), {
+            await updateDoc(doc(doc(db, "cortesHoy", idCorte)), {
                 monto: Math.round(nuevoMonto),
                 metodo: nuevoMetodo
             });
+
+            // 📜 AUDITORÍA: Registrar edición desde la App Barberos
+            const peluqueroNombre = regAnterior ? regAnterior.peluquero : 'desconocido';
+            registrarLog('EDITAR_CORTE', `Editó corte de ${peluqueroNombre}. Antes: $${montoActual} (${metodoActual}) ➔ Ahora: $${Math.round(nuevoMonto)} (${nuevoMetodo})`);
+
         } catch (err) {
             alert('Error al actualizar el registro: ' + err.message);
         }
@@ -355,10 +403,16 @@
 
     // ELIMINAR CORTE
     window.borrarRegistro = async function(idCorte, monto) {
+        const regAnterior = window.registrosHoy.find(r => r.id === idCorte);
         const confirmar = confirm(`¿Estás seguro de eliminar este corte de $${monto.toLocaleString()}?\n\nEsta acción no se puede deshacer.`);
         if (confirmar) {
             try {
                 await deleteDoc(doc(db, "cortesHoy", idCorte));
+
+                // 📜 AUDITORÍA: Registrar borrado desde la App Barberos
+                if (regAnterior) {
+                    registrarLog('ELIMINAR_CORTE', `Eliminó el corte de $${regAnterior.monto} (${regAnterior.metodo}) asignado a ${regAnterior.peluquero}`);
+                }
             } catch (err) {
                 alert('Error al eliminar el corte: ' + err.message);
             }
@@ -366,26 +420,6 @@
     };
 
     document.getElementById('peluquero').addEventListener('change', actualizarTarjetasYLista);
-
-    window.agregarCorte = async function() {
-        const peluquero = document.getElementById('peluquero').value;
-        const monto = parseFloat(document.getElementById('monto').value);
-        const esTransferencia = document.getElementById('esTransferencia').checked;
-
-        if (isNaN(monto) || monto <= 0) return alert('Ingrese un monto válido');
-
-        const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-        await addDoc(collection(db, "cortesHoy"), {
-            tipo: 'corte',
-            peluquero: peluquero,
-            monto: monto,
-            hora: hora,
-            metodo: esTransferencia ? 'transferencia' : 'efectivo',
-            timestamp: Date.now()
-        });
-
-        document.getElementById('esTransferencia').checked = false;
-    };
 </script>
 </body>
 </html>
