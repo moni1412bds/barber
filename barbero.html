@@ -40,7 +40,7 @@
         .corte-hora { font-size: 0.75rem; color: #64748b; }
         .corte-monto { font-weight: bold; color: #0f172a; font-size: 0.95rem; }
         
-        /* BOTONES DE ACCIÓN (ESTILO IMAGEN) */
+        /* BOTONES DE ACCIÓN */
         .corte-acciones { display: flex; gap: 6px; align-items: center; }
         .btn-action { width: 36px; height: 32px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; }
         .btn-edit { background-color: #f59e0b; }
@@ -204,7 +204,7 @@
         if (!usuarioActual) return;
         const cortes = window.registrosHoy.filter(r => r.tipo !== 'gasto');
 
-        // TOTAL GENERAL HOY
+        // 1. TOTAL GENERAL DE LA BARBERÍA (100%)
         const totalGeneral = cortes.reduce((acc, c) => acc + c.monto, 0);
         const cantGeneral = cortes.length;
         const promGeneral = cantGeneral > 0 ? Math.round(totalGeneral / cantGeneral) : 0;
@@ -214,22 +214,25 @@
         document.getElementById('lblTotalHoy').innerText = `$${totalGeneral.toLocaleString()}`;
         document.getElementById('lblDetalleTotal').innerHTML = `${cantGeneral} cortes | Prom: $${promGeneral.toLocaleString()}<br>Ef: $${efGeneral.toLocaleString()} | Tr: $${trGeneral.toLocaleString()}`;
 
-        // TOTAL DEL BARBERO SELECCIONADO
+        // 2. TOTAL DEL BARBERO CON EL 50% APLICADO
         const barberoKey = document.getElementById('peluquero').value || usuarioActual.email.split('@')[0].toLowerCase();
         const misCortes = cortes.filter(c => c.peluquero && c.peluquero.toLowerCase() === barberoKey);
         
-        const totalBarbero = misCortes.reduce((acc, c) => acc + c.monto, 0);
+        const recaudadoBarbero = misCortes.reduce((acc, c) => acc + c.monto, 0);
+        const totalBarbero50 = Math.round(recaudadoBarbero * 0.5); // 50% para el barbero
+        
         const cantBarbero = misCortes.length;
-        const promBarbero = cantBarbero > 0 ? Math.round(totalBarbero / cantBarbero) : 0;
-        const efBarbero = misCortes.filter(c => c.metodo === 'efectivo').reduce((acc, c) => acc + c.monto, 0);
-        const trBarbero = misCortes.filter(c => c.metodo === 'transferencia').reduce((acc, c) => acc + c.monto, 0);
+        const promBarbero50 = cantBarbero > 0 ? Math.round(totalBarbero50 / cantBarbero) : 0;
+        
+        const efBarbero50 = Math.round(misCortes.filter(c => c.metodo === 'efectivo').reduce((acc, c) => acc + c.monto, 0) * 0.5);
+        const trBarbero50 = Math.round(misCortes.filter(c => c.metodo === 'transferencia').reduce((acc, c) => acc + c.monto, 0) * 0.5);
 
         const nombreFormateado = barberoKey.charAt(0).toUpperCase() + barberoKey.slice(1);
         document.getElementById('lblNombreBarbero').innerText = nombreFormateado;
-        document.getElementById('lblTotalBarbero').innerText = `$${totalBarbero.toLocaleString()}`;
-        document.getElementById('lblDetalleBarbero').innerHTML = `${cantBarbero} cortes | Prom: $${promBarbero.toLocaleString()}<br>Ef: $${efBarbero.toLocaleString()} | Tr: $${trBarbero.toLocaleString()}`;
+        document.getElementById('lblTotalBarbero').innerText = `$${totalBarbero50.toLocaleString()}`;
+        document.getElementById('lblDetalleBarbero').innerHTML = `${cantBarbero} cortes | Prom: $${promBarbero50.toLocaleString()}<br>Ef: $${efBarbero50.toLocaleString()} | Tr: $${trBarbero50.toLocaleString()}`;
 
-        // LISTA DE CORTES
+        // 3. RENDERIZAR LISTA DE CORTES
         const contenedorLista = document.getElementById('listaCortes');
         contenedorLista.innerHTML = '';
 
@@ -269,7 +272,7 @@
     window.editarRegistro = async function(idCorte, montoActual, metodoActual) {
         const entradaMonto = prompt(`Monto actual: $${montoActual}\n\n• Ingresá el nuevo monto (ej: 8000)\n• O ingresá el descuento en % (ej: 20%):`, montoActual);
         
-        if (entradaMonto === null) return; // Cancelado
+        if (entradaMonto === null) return;
 
         let nuevoMonto = 0;
         const entradaLimpia = entradaMonto.trim();
