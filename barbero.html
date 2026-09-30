@@ -3,259 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Barbería - Panel Barbero</title>
+    <title>Barbería - App Barberos</title>
 
-    <!-- Configuración PWA y Auto-Update para Android/iOS -->
-    <link rel="manifest" href="manifest.json">
+    <!-- Integración PWA -->
+    <link rel="manifest" href="manifest-barbero.json">
     <meta name="theme-color" content="#1e293b">
-    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Configuración para iOS (Safari) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Barbería App">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-title" content="Barbero App">
+    <link rel="apple-touch-icon" href="icon.png">
 
-    <!-- Evitar caché desactualizado en celulares -->
+    <!-- Configuración para Android / Chrome Web App -->
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <!-- Registro PWA y limpieza para evitar almacenamiento obsoleto -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for (let registration of registrations) {
-                    registration.unregister();
-                }
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    for (let registration of registrations) {
+                        registration.unregister();
+                    }
+                });
             });
         }
     </script>
 
     <style>
-        :root {
-            --primary: #1e293b;
-            --bg: #f1f5f9;
-        }
-
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f1f5f9; margin: 0; padding: 12px; color: #334155; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; }
+        h1 { margin: 0; color: #1e293b; font-size: 1.2rem; }
+        .user-badge { background: #e2e8f0; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 0.8rem; color: #334155; }
 
-        body {
-            background-color: var(--bg);
-            margin: 0;
-            padding: 10px;
-            color: #334155;
-        }
+        /* GRILLA DE TARJETAS */
+        .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .card-stat { padding: 12px; border-radius: 10px; color: white; text-align: center; }
+        .card-total { background: #1e293b; }
+        .card-barbero { background: #10b981; }
+        .card-stat h3 { margin: 0; font-size: 0.9rem; opacity: 0.9; }
+        .card-stat .amount { font-size: 1.5rem; font-weight: bold; margin: 4px 0; }
+        .card-stat .subtext { font-size: 0.75rem; opacity: 0.9; line-height: 1.3; }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        }
+        .input-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        label { font-weight: 600; font-size: 0.85rem; }
+        select, input, button { padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 1rem; width: 100%; }
 
-        .header {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 12px;
-            margin-bottom: 15px;
-        }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; cursor: pointer; }
+        .checkbox-group input { width: 18px; height: 18px; }
 
-        @media (min-width: 600px) {
-            .header { flex-direction: row; justify-content: space-between; align-items: center; }
-            body { padding: 15px; }
-            .container { padding: 20px; }
-        }
+        button.btn-primary { background-color: #10b981; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        button.btn-logout { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
 
-        h1 { margin: 0; color: var(--primary); font-size: 1.4rem; }
-        .date-badge { background: #e2e8f0; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; align-self: flex-start; }
+        /* LISTA DE CORTES */
+        .history-section { margin-top: 10px; }
+        .history-section h2 { font-size: 1rem; color: #1e293b; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+        .corte-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f1f5f9; background: #fff; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0; }
+        .corte-info { display: flex; flex-direction: column; gap: 2px; }
+        .corte-hora { font-size: 0.75rem; color: #64748b; }
+        .corte-monto { font-weight: bold; color: #0f172a; font-size: 0.95rem; }
+        
+        /* BOTONES DE ACCIÓN */
+        .corte-acciones { display: flex; gap: 6px; align-items: center; }
+        .btn-action { width: 36px; height: 32px; border: none; border-radius: 6px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; }
+        .btn-edit { background-color: #f59e0b; }
+        .btn-delete { background-color: #ef4444; }
 
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+        .badge-pago { font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; }
+        .badge-efectivo { background: #dcfce7; color: #15803d; }
+        .badge-transferencia { background: #dbeafe; color: #1e40af; }
 
-        .card {
-            padding: 12px;
-            border-radius: 10px;
-            color: white;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-            background-color: #3b82f6;
-        }
-
-        .card-total { background-color: #1e293b; }
-        .card h3 { margin: 0 0 6px 0; font-size: 1rem; text-transform: capitalize; }
-        .card .amount { font-size: 1.3rem; font-weight: bold; }
-        .card .subtext { font-size: 0.78rem; opacity: 0.95; margin-top: 4px; line-height: 1.3; }
-
-        .input-section {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .input-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 120px; }
-        label { font-weight: 600; font-size: 0.8rem; }
-
-        select, input, button {
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            font-size: 0.9rem;
-            width: 100%;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: #fff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            cursor: pointer;
-            min-width: 150px;
-            user-select: none;
-        }
-
-        .checkbox-group input { width: auto; cursor: pointer; }
-        .checkbox-group label { cursor: pointer; font-size: 0.85rem; margin: 0; }
-
-        button.btn-primary { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; }
-        button.btn-config { background-color: #475569; color: white; border: none; cursor: pointer; font-weight: bold; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; width: auto; }
-
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            margin-top: 10px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-        }
-
-        table { width: 100%; border-collapse: collapse; min-width: 500px; }
-        th, td { border-bottom: 1px solid #e2e8f0; padding: 8px 10px; text-align: center; font-size: 0.85rem; white-space: nowrap; }
-        th { background-color: #f8fafc; font-weight: bold; }
-
-        .status-bar {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-
-        .badge-pago { padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
-        .badge-efectivo { background: #dcfce7; color: #166534; }
-        .badge-transf { background: #e0f2fe; color: #075985; }
-        .badge-gasto { background: #fee2e2; color: #991b1b; }
-
-        .modal-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 999;
-        }
-        .modal-content { position: relative; background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
-        .btn-modal-close-x {
-            position: absolute; top: 12px; right: 12px; background: #ef4444; color: white; border: none;
-            width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-weight: bold;
-            display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1;
-        }
+        .login-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .login-box { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 360px; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<!-- PANTALLA DE LOGIN -->
+<div class="login-bg" id="loginScreen">
+    <div class="login-box">
+        <h2 style="margin-top:0; color:#1e293b;">✂️ Acceso Barberos</h2>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <input type="email" id="loginEmail" placeholder="Correo electrónico...">
+            <input type="password" id="loginPassword" placeholder="Contraseña...">
+            <button class="btn-primary" style="background:#1e293b;" onclick="iniciarSesion()">Ingresar</button>
+            <p id="loginError" style="color:#ef4444; font-size:0.8rem; margin:0; display:none;"></p>
+        </div>
+    </div>
+</div>
+
+<!-- CONTENIDO PRINCIPAL -->
+<div class="container" id="mainContent" style="display: none;">
     <div class="header">
-        <h1>✂️️ Panel de Registro - Barbero</h1>
-        <div class="date-badge" id="fechaHoy">--/--/----</div>
-    </div>
-
-    <!-- BARRA DE ESTADO -->
-    <div class="status-bar">
-        <div style="font-size: 0.85rem;">
-            🔥 <strong id="statusText">Conectando a Firebase...</strong>
-        </div>
-        <div style="display:flex; gap:6px;">
-            <button class="btn-config" onclick="abrirModalGastos()">💸 Retiro/Gasto</button>
-            <button class="btn-config" style="background:#dc2626;" onclick="cerrarSesion()">🚪 Salir</button>
+        <h1>✂️ Mi Panel</h1>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="user-badge" id="nombreUsuario">Peluquero</span>
+            <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
         </div>
     </div>
 
-    <!-- TARJETAS DE RESUMEN DIARIO -->
-    <div class="cards-grid" id="cardsBarberosGrid"></div>
+    <!-- TARJETAS DE RESUMEN -->
+    <div class="cards-grid">
+        <div class="card-stat card-total">
+            <h3>Total Hoy</h3>
+            <div class="amount" id="lblTotalHoy">$0</div>
+            <div class="subtext" id="lblDetalleTotal">0 cortes | Prom: $0<br>Ef: $0 | Tr: $0</div>
+        </div>
 
-    <!-- REGISTRO DE TRABAJO -->
+        <div class="card-stat card-barbero">
+            <h3 id="lblNombreBarbero">Mi Total</h3>
+            <div class="amount" id="lblTotalBarbero">$0</div>
+            <div class="subtext" id="lblDetalleBarbero">0 cortes | Prom: $0<br>Ef: $0 | Tr: $0</div>
+        </div>
+    </div>
+
+    <!-- FORMULARIO CORTES -->
     <div class="input-section">
         <div class="input-group">
-            <label for="peluquero">Peluquero</label>
+            <label for="peluquero">Peluquero Que Registra</label>
             <select id="peluquero"></select>
         </div>
         <div class="input-group">
-            <label for="monto">Monto ($)</label>
+            <label for="monto">Monto del Corte ($)</label>
             <input type="number" id="monto" value="10000" step="1000">
         </div>
         <div class="checkbox-group" onclick="document.getElementById('esTransferencia').click(); event.stopPropagation();">
             <input type="checkbox" id="esTransferencia" onclick="event.stopPropagation();">
-            <label for="esTransferencia">💳 Transferencia</label>
+            <label for="esTransferencia">💳 Transferencia / MercadoPago</label>
         </div>
-        <div class="input-group">
-            <button class="btn-primary" id="btnAgregar" onclick="agregarCorte()">+ Registrar Corte</button>
-        </div>
+        <button class="btn-primary" onclick="agregarCorte()">+ REGISTRAR CORTE</button>
     </div>
 
-    <h3 style="margin-top:20px; font-size:1.1rem;">Cortes Registrados Hoy</h3>
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>Hora</th>
-                    <th>Concepto / Peluquero</th>
-                    <th>Medio</th>
-                    <th>Monto Corte</th>
-                    <th>Pago Barbero</th>
-                </tr>
-            </thead>
-            <tbody id="tablaRegistrosDiarios"></tbody>
-        </table>
-    </div>
-</div>
-
-<!-- MODAL PARA REGISTRO DE GASTOS / RETIROS -->
-<div class="modal-bg" id="modalGastos">
-    <div class="modal-content">
-        <button class="btn-modal-close-x" onclick="cerrarModalGastos()">✕</button>
-        <h3 style="margin-top:0; color:#991b1b;">💸 Registrar Gasto / Retiro</h3>
-
-        <div style="display:flex; flex-direction:column; gap:10px;">
-            <input type="text" id="gastoDetalle" placeholder="Detalle (Insumos, Retiro, Limpieza)...">
-            <input type="number" id="gastoMonto" placeholder="Monto ($)" step="500">
-            <div class="checkbox-group" style="padding: 8px 12px; background:white;" onclick="document.getElementById('gastoEsTransferencia').click(); event.stopPropagation();">
-                <input type="checkbox" id="gastoEsTransferencia" onclick="event.stopPropagation();">
-                <label for="gastoEsTransferencia">💳 Salida por Transferencia</label>
-            </div>
-            <button class="btn-primary" style="background:#dc2626;" onclick="registrarGastoCaja()">- Guardar Retiro</button>
+    <!-- LISTA DE CORTES REGISTRADOS -->
+    <div class="history-section">
+        <h2>📋 Cortes de Hoy</h2>
+        <div id="listaCortes">
+            <p style="text-align:center; color:#94a3b8; font-size:0.85rem;">Cargando registros...</p>
         </div>
     </div>
 </div>
 
-<!-- FIREBASE SDKs & LOGIC -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { 
-        getAuth, onAuthStateChanged, signOut 
-    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { 
-        getFirestore, collection, addDoc, onSnapshot, doc, setDoc, enableIndexedDbPersistence 
-    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDr2WkcTIkK65JAnbY1F9kRmesUgFYezW4",
@@ -269,71 +164,195 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
-    // MODO OFFLINE
     enableIndexedDbPersistence(db).catch(() => {});
 
-    // COMPROBAR SESIÓN
+    let usuarioActual = null;
+    window.listaBarberos = [];
+    window.registrosHoy = [];
+
     onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            window.location.href = "login.html";
-            return;
+        if (user) {
+            usuarioActual = user;
+            const emailNombre = user.email.split('@')[0];
+            document.getElementById('nombreUsuario').innerText = emailNombre.toUpperCase();
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            iniciarEscuchadores();
+        } else {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
         }
-        document.getElementById('statusText').innerText = `Sesión: ${user.email}`;
     });
 
-    window.cerrarSesion = function() {
-        signOut(auth).then(() => window.location.href = "login.html");
+    window.iniciarSesion = async function() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const pass = document.getElementById('loginPassword').value.trim();
+        const errTxt = document.getElementById('loginError');
+        try {
+            errTxt.style.display = 'none';
+            await signInWithEmailAndPassword(auth, email, pass);
+        } catch (err) {
+            errTxt.innerText = "Error: Usuario o clave incorrecta";
+            errTxt.style.display = 'block';
+        }
     };
 
-    window.listaBarberos = ['riki', 'lucas', 'willy'];
-    window.registrosHoy = [];
-    const coloresBarberos = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+    window.cerrarSesion = () => signOut(auth);
 
-    document.getElementById('fechaHoy').innerText = new Date().toLocaleDateString('es-AR', {
-        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-    });
-
-    // LISTENERS FIRESTORE
-    onSnapshot(doc(db, "configuracion", "barberos"), (docSnap) => {
-        if (docSnap.exists() && docSnap.data().lista) {
-            window.listaBarberos = docSnap.data().lista;
-        } else {
-            setDoc(doc(db, "configuracion", "barberos"), { lista: window.listaBarberos });
-        }
-        actualizarSelectoresBarberos();
-        actualizarInterfazDiaria();
-    });
-
-    onSnapshot(collection(db, "cortesHoy"), (snapshot) => {
-        window.registrosHoy = [];
-        snapshot.forEach((doc) => {
-            window.registrosHoy.push({ id: doc.id, ...doc.data() });
+    function iniciarEscuchadores() {
+        onSnapshot(doc(db, "configuracion", "barberos"), (docSnap) => {
+            if (docSnap.exists() && docSnap.data().lista) {
+                window.listaBarberos = docSnap.data().lista;
+            }
+            actualizarSelectoresBarberos();
         });
-        actualizarInterfazDiaria();
-    });
 
-    window.actualizarSelectoresBarberos = function() {
+        onSnapshot(collection(db, "cortesHoy"), (snapshot) => {
+            window.registrosHoy = [];
+            snapshot.forEach((doc) => window.registrosHoy.push({ id: doc.id, ...doc.data() }));
+            actualizarTarjetasYLista();
+        });
+    }
+
+    function actualizarSelectoresBarberos() {
         const select = document.getElementById('peluquero');
-        if (!select) return;
         select.innerHTML = '';
+        const emailNombre = usuarioActual ? usuarioActual.email.split('@')[0].toLowerCase() : '';
         window.listaBarberos.forEach(b => {
             const opt = document.createElement('option');
             opt.value = b.toLowerCase();
             opt.textContent = b.charAt(0).toUpperCase() + b.slice(1);
+            if (b.toLowerCase() === emailNombre) opt.selected = true;
             select.appendChild(opt);
         });
+    }
+
+    function actualizarTarjetasYLista() {
+        if (!usuarioActual) return;
+        const cortes = window.registrosHoy.filter(r => r.tipo !== 'gasto');
+
+        // 1. TOTAL GENERAL DE LA BARBERÍA (100%)
+        const totalGeneral = cortes.reduce((acc, c) => acc + c.monto, 0);
+        const cantGeneral = cortes.length;
+        const promGeneral = cantGeneral > 0 ? Math.round(totalGeneral / cantGeneral) : 0;
+        const efGeneral = cortes.filter(c => c.metodo === 'efectivo').reduce((acc, c) => acc + c.monto, 0);
+        const trGeneral = cortes.filter(c => c.metodo === 'transferencia').reduce((acc, c) => acc + c.monto, 0);
+
+        document.getElementById('lblTotalHoy').innerText = `$${totalGeneral.toLocaleString()}`;
+        document.getElementById('lblDetalleTotal').innerHTML = `${cantGeneral} cortes | Prom: $${promGeneral.toLocaleString()}<br>Ef: $${efGeneral.toLocaleString()} | Tr: $${trGeneral.toLocaleString()}`;
+
+        // 2. TOTAL DEL BARBERO CON EL 50% APLICADO
+        const barberoKey = document.getElementById('peluquero').value || usuarioActual.email.split('@')[0].toLowerCase();
+        const misCortes = cortes.filter(c => c.peluquero && c.peluquero.toLowerCase() === barberoKey);
+        
+        const recaudadoBarbero = misCortes.reduce((acc, c) => acc + c.monto, 0);
+        const totalBarbero50 = Math.round(recaudadoBarbero * 0.5); // 50% para el barbero
+        
+        const cantBarbero = misCortes.length;
+        const promBarbero50 = cantBarbero > 0 ? Math.round(totalBarbero50 / cantBarbero) : 0;
+        
+        const efBarbero50 = Math.round(misCortes.filter(c => c.metodo === 'efectivo').reduce((acc, c) => acc + c.monto, 0) * 0.5);
+        const trBarbero50 = Math.round(misCortes.filter(c => c.metodo === 'transferencia').reduce((acc, c) => acc + c.monto, 0) * 0.5);
+
+        const nombreFormateado = barberoKey.charAt(0).toUpperCase() + barberoKey.slice(1);
+        document.getElementById('lblNombreBarbero').innerText = nombreFormateado;
+        document.getElementById('lblTotalBarbero').innerText = `$${totalBarbero50.toLocaleString()}`;
+        document.getElementById('lblDetalleBarbero').innerHTML = `${cantBarbero} cortes | Prom: $${promBarbero50.toLocaleString()}<br>Ef: $${efBarbero50.toLocaleString()} | Tr: $${trBarbero50.toLocaleString()}`;
+
+        // 3. RENDERIZAR LISTA DE CORTES
+        const contenedorLista = document.getElementById('listaCortes');
+        contenedorLista.innerHTML = '';
+
+        if (misCortes.length === 0) {
+            contenedorLista.innerHTML = `<p style="text-align:center; color:#94a3b8; font-size:0.85rem;">No hay cortes registrados hoy para ${nombreFormateado}.</p>`;
+            return;
+        }
+
+        misCortes.sort((a, b) => b.timestamp - a.timestamp);
+
+        misCortes.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'corte-item';
+            
+            const esEf = item.metodo === 'efectivo';
+            const badgeClass = esEf ? 'badge-efectivo' : 'badge-transferencia';
+            const badgeTexto = esEf ? 'EFECTIVO' : 'TRANSFERENCIA';
+
+            div.innerHTML = `
+                <div class="corte-info">
+                    <div>
+                        <span class="corte-monto">$${item.monto.toLocaleString()}</span>
+                        <span class="badge-pago ${badgeClass}">${badgeTexto}</span>
+                    </div>
+                    <span class="corte-hora">⏰ ${item.hora || 'S/H'}</span>
+                </div>
+                <div class="corte-acciones">
+                    <button class="btn-action btn-edit" onclick="editarRegistro('${item.id}', ${item.monto}, '${item.metodo}')" title="Editar corte">✏️</button>
+                    <button class="btn-action btn-delete" onclick="borrarRegistro('${item.id}', ${item.monto})" title="Eliminar corte">✕</button>
+                </div>
+            `;
+            contenedorLista.appendChild(div);
+        });
+    }
+
+    // EDITAR CORTE (MONTO Y METODO DE PAGO)
+    window.editarRegistro = async function(idCorte, montoActual, metodoActual) {
+        const entradaMonto = prompt(`Monto actual: $${montoActual}\n\n• Ingresá el nuevo monto (ej: 8000)\n• O ingresá el descuento en % (ej: 20%):`, montoActual);
+        
+        if (entradaMonto === null) return;
+
+        let nuevoMonto = 0;
+        const entradaLimpia = entradaMonto.trim();
+
+        if (entradaLimpia.endsWith('%')) {
+            const porcentaje = parseFloat(entradaLimpia.replace('%', ''));
+            if (isNaN(porcentaje) || porcentaje < 0 || porcentaje > 100) {
+                alert('Porcentaje inválido');
+                return;
+            }
+            nuevoMonto = montoActual - (montoActual * (porcentaje / 100));
+        } else {
+            nuevoMonto = parseFloat(entradaLimpia);
+        }
+
+        if (isNaN(nuevoMonto) || nuevoMonto <= 0) {
+            alert('Monto no válido');
+            return;
+        }
+
+        const cambiarPago = confirm(`El medio de pago actual es: ${metodoActual.toUpperCase()}.\n\n¿Deseas cambiarlo a ${(metodoActual === 'efectivo' ? 'TRANSFERENCIA' : 'EFECTIVO')}?`);
+        const nuevoMetodo = cambiarPago ? (metodoActual === 'efectivo' ? 'transferencia' : 'efectivo') : metodoActual;
+
+        try {
+            await updateDoc(doc(db, "cortesHoy", idCorte), {
+                monto: Math.round(nuevoMonto),
+                metodo: nuevoMetodo
+            });
+        } catch (err) {
+            alert('Error al actualizar el registro: ' + err.message);
+        }
     };
+
+    // ELIMINAR CORTE
+    window.borrarRegistro = async function(idCorte, monto) {
+        const confirmar = confirm(`¿Estás seguro de eliminar este corte de $${monto.toLocaleString()}?\n\nEsta acción no se puede deshacer.`);
+        if (confirmar) {
+            try {
+                await deleteDoc(doc(db, "cortesHoy", idCorte));
+            } catch (err) {
+                alert('Error al eliminar el corte: ' + err.message);
+            }
+        }
+    };
+
+    document.getElementById('peluquero').addEventListener('change', actualizarTarjetasYLista);
 
     window.agregarCorte = async function() {
         const peluquero = document.getElementById('peluquero').value;
         const monto = parseFloat(document.getElementById('monto').value);
         const esTransferencia = document.getElementById('esTransferencia').checked;
 
-        if (isNaN(monto) || monto <= 0) {
-            alert('Ingrese un monto válido');
-            return;
-        }
+        if (isNaN(monto) || monto <= 0) return alert('Ingrese un monto válido');
 
         const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
         await addDoc(collection(db, "cortesHoy"), {
@@ -347,99 +366,6 @@
 
         document.getElementById('esTransferencia').checked = false;
     };
-
-    window.registrarGastoCaja = async function() {
-        const detalle = document.getElementById('gastoDetalle').value.trim();
-        const monto = parseFloat(document.getElementById('gastoMonto').value);
-        const esTransferencia = document.getElementById('gastoEsTransferencia').checked;
-
-        if (!detalle || isNaN(monto) || monto <= 0) {
-            alert('Ingrese detalle y monto válidos');
-            return;
-        }
-
-        const hora = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-        await addDoc(collection(db, "cortesHoy"), {
-            tipo: 'gasto',
-            detalle: detalle,
-            monto: monto,
-            hora: hora,
-            metodo: esTransferencia ? 'transferencia' : 'efectivo',
-            timestamp: Date.now()
-        });
-
-        document.getElementById('gastoDetalle').value = '';
-        document.getElementById('gastoMonto').value = '';
-        document.getElementById('gastoEsTransferencia').checked = false;
-        cerrarModalGastos();
-    };
-
-    window.actualizarInterfazDiaria = function() {
-        const grid = document.getElementById('cardsBarberosGrid');
-        if (!grid) return;
-
-        const cortes = window.registrosHoy.filter(r => r.tipo !== 'gasto');
-        const totalCortesCount = cortes.length;
-        const totalRecaudadoCortes = cortes.reduce((acc, curr) => acc + curr.monto, 0);
-
-        let htmlCards = `
-            <div class="card card-total">
-                <h3>Cortes de Hoy</h3>
-                <div class="amount">${totalCortesCount}</div>
-                <div class="subtext">Recaudado total: $${totalRecaudadoCortes.toLocaleString()}</div>
-            </div>
-        `;
-
-        window.listaBarberos.forEach((barbero, idx) => {
-            const bKey = barbero.toLowerCase();
-            const cortesB = cortes.filter(r => r.peluquero && r.peluquero.toLowerCase() === bKey);
-            const totB = cortesB.reduce((a, b) => a + b.monto, 0);
-            const color = coloresBarberos[idx % coloresBarberos.length];
-
-            htmlCards += `
-                <div class="card" style="background-color: ${color}">
-                    <h3>${barbero}</h3>
-                    <div class="amount">$${(totB * 0.5).toLocaleString()}</div>
-                    <div class="subtext">${cortesB.length} cortes realizados</div>
-                </div>
-            `;
-        });
-
-        grid.innerHTML = htmlCards;
-
-        const tbody = document.getElementById('tablaRegistrosDiarios');
-        tbody.innerHTML = '';
-
-        window.registrosHoy.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
-
-        window.registrosHoy.forEach((reg) => {
-            const esGasto = (reg.tipo === 'gasto');
-            const metodo = reg.metodo || 'efectivo';
-            const tr = document.createElement('tr');
-
-            if (esGasto) {
-                tr.innerHTML = `
-                    <td><strong>${reg.hora}</strong></td>
-                    <td style="color:#dc2626; font-weight:bold;">💸 GASTO: ${reg.detalle}</td>
-                    <td><span class="badge-pago badge-gasto">${metodo === 'transferencia' ? '💳 Transf.' : '💵 Efec.'}</span></td>
-                    <td style="color:#dc2626; font-weight:bold;">-$${reg.monto.toLocaleString()}</td>
-                    <td><em style="color:#94a3b8;">Retiro Caja</em></td>
-                `;
-            } else {
-                tr.innerHTML = `
-                    <td><strong>${reg.hora}</strong></td>
-                    <td style="text-transform: capitalize;">${reg.peluquero}</td>
-                    <td><span class="badge-pago ${metodo === 'transferencia' ? 'badge-transf' : 'badge-efectivo'}">${metodo === 'transferencia' ? '💳 Transf.' : '💵 Efec.'}</span></td>
-                    <td>$${reg.monto.toLocaleString()}</td>
-                    <td>$${(reg.monto * 0.5).toLocaleString()}</td>
-                `;
-            }
-            tbody.appendChild(tr);
-        });
-    };
-
-    window.abrirModalGastos = () => document.getElementById('modalGastos').style.display = 'flex';
-    window.cerrarModalGastos = () => document.getElementById('modalGastos').style.display = 'none';
 </script>
 </body>
 </html>
