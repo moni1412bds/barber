@@ -435,17 +435,18 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // MODO OFFLINE
+    // MODO OFFLINE / PERSISTENCIA LOCAL INDEXEDDB
     enableIndexedDbPersistence(db).catch((err) => {
         if (err.code == 'failed-precondition') console.log('Persistencia falló: Múltiples pestañas abiertas.');
         else if (err.code == 'unimplemented') console.log('El navegador no soporta offline.');
     });
 
-    window.userRol = "barbero";
+    window.userRol = localStorage.getItem('userRol_cache') || "barbero";
 
     // COMPROBAR SESIÓN Y APLICAR RESTRICCIONES DE SEGURIDAD SEGÚN ROL
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
+            localStorage.clear();
             window.location.href = "login.html";
             return;
         }
@@ -458,10 +459,10 @@
                 window.userRol = "barbero";
             }
         } catch (e) {
-            console.log("Error verificando rol:", e);
-            window.userRol = "barbero";
+            console.log("Error verificando rol (usando caché):", e);
         }
 
+        localStorage.setItem('userRol_cache', window.userRol);
         aplicarPermisosRol();
         document.getElementById('statusText').innerText = `Sesión: ${user.email} (${window.userRol.toUpperCase()})`;
     });
@@ -479,13 +480,14 @@
     }
 
     window.cerrarSesion = function() {
+        localStorage.clear();
         signOut(auth).then(() => window.location.href = "login.html");
     };
 
-    // Estado local
-    window.listaBarberos = ['riki', 'lucas', 'willy'];
-    window.registrosHoy = [];
-    window.historialCierres = [];
+    // Estado local con fallback a localStorage
+    window.listaBarberos = JSON.parse(localStorage.getItem('barberos_cache') || '["riki", "lucas", "willy"]');
+    window.registrosHoy = JSON.parse(localStorage.getItem('registros_hoy_cache') || '[]');
+    window.historialCierres = JSON.parse(localStorage.getItem('historial_cierres_cache') || '[]');
     window.idEditando = null;
     const coloresBarberos = ['#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
@@ -493,10 +495,11 @@
         weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
     });
 
-    // ESCUCHADORES FIRESTORE
+    // ESCUCHADORES FIRESTORE CON PERSISTENCIA
     onSnapshot(doc(db, "configuracion", "barberos"), (docSnap) => {
         if (docSnap.exists() && docSnap.data().lista) {
             window.listaBarberos = docSnap.data().lista;
+            localStorage.setItem('barberos_cache', JSON.stringify(window.listaBarberos));
         } else {
             setDoc(doc(db, "configuracion", "barberos"), { lista: window.listaBarberos });
         }
@@ -509,6 +512,7 @@
         snapshot.forEach((doc) => {
             window.registrosHoy.push({ id: doc.id, ...doc.data() });
         });
+        localStorage.setItem('registros_hoy_cache', JSON.stringify(window.registrosHoy));
         actualizarInterfazDiaria();
     });
 
@@ -517,6 +521,7 @@
         snapshot.forEach((doc) => {
             window.historialCierres.push({ id: doc.id, ...doc.data() });
         });
+        localStorage.setItem('historial_cierres_cache', JSON.stringify(window.historialCierres));
         if (document.getElementById('tab-historial').classList.contains('active')) {
             renderHistorial();
         }
