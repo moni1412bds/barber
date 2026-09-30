@@ -1,0 +1,16 @@
+{
+  "short_name": "Barbero App",
+  "name": "Barbería - Panel Barbero",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./barbero.html",
+  "background_color": "#1e293b",
+  "theme_color": "#1e293b",
+  "display": "standalone",
+  "orientation": "portrait"
+}
